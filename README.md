@@ -7,4 +7,5 @@
 Nous souhaitons faire un jeu en 2d. Avec des graphismes du type "Celeste".  
 Le personnage principal est coincé en enfer et doit essayer de remonter sur terre. 
 
-C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.
+C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.  
+Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA
