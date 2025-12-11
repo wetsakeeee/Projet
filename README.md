@@ -50,6 +50,7 @@ Les checkpoints seront fréquents.
 ## LIENS
 SFX et Musiques de fond : https://www.youtube.com/watch?v=pcdB2s2y4Qc  
 Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
+Animation personnage : https://www.youtube.com/watch?v=M6e3_8LHc7A
 
  
 
