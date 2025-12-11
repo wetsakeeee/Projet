@@ -15,7 +15,7 @@ Il peut y avoir des sauts décisifs (si on rate = on recommence)
 
 C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.  
 Sur le menu il y aura : paramètre, choix du personnages, lancer une partie
-Un cheatcode sera donné à la fin de chaque niveaux permettant au joueur de retourner au dernier niveau terminé. 
+Un cheatcode sera donné à la fin de chaque niveaux permettant au joueur de retourner au dernier niveau terminé.  
 On utilisera la bibliothèque pygame.
 
 ## ASPECT SONORE ET GRAPHIQUE
