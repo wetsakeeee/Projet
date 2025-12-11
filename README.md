@@ -15,8 +15,9 @@ Il peut y avoir des sauts décisifs (si on rate = on recommence)
 C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.  
 Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
 Sur le menu il y aura : paramètre, choix du personnages, lancer une partie et sauvegarder la partie  
-  
-  
+Un cheatcode sera donné à la fin de chaque niveaux permettant au joueur de retourner au dernier niveau terminé. 
+
+
 Ca sera un jeu solo et en 2d.  
 Pour ce qui concerne les graphismes, ça sera des graphismes simples et pixelisés, et pour cela on va utiliser Pygame.  
 Le jeu contiendra des dialogues avec des NPC, qui nous servira à obtenir des vies, à comprendre l'histoire et à avancer dans les niveaux. 
