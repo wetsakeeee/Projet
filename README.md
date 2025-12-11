@@ -31,7 +31,7 @@ Pendant les niveaux, il y aura peu d'ennemis pour faciliter la jouabilité du jo
 Saut = Espace
 Aller à droite = d
 Aller à gauche = q
-S'accrocher à des liannes/tiroliennes, lire des panneaux = z
+S'accrocher à des liannes/tyroliennes, lire des panneaux = z
 Se Baisser = s
 Pause = Echap
 
