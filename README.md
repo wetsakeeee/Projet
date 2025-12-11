@@ -17,7 +17,10 @@ Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA
 Sur le menu il y aura : paramètre, choix du personnages, lancer une partie et sauvegarder la partie  
   
   
-Ca sera un jeu solo, 2d, avec des graphiques simples/pixelisés. Il contiendra des dialogues avec des NPC, avec des musiques et des SFX en fonction des actions du personnages. Peu d'ennemi pendant les niveaux, principalement des boss à la fin de chaque dimensions.  
+Ca sera un jeu solo et en 2d.  
+Pour ce qui concerne les graphismes, ça sera des graphismes simples et pixelisés, et pour cela on va utiliser Pygame.  
+Le jeu contiendra des dialogues avec des NPC, qui nous servira à obtenir des vies, à comprendre l'histoire et à avancer dans les niveaux. 
+Il y aura une musique de fond dans l'écran du menu qui durera moins d'une minute et sera joué en boucle, jusqu'à que le joueur appui sur le bouton Jouer. Dans les niveaux, il y aura avec des musiques de fond, qui aura un lien avec la dimensions où le joueur se trouve et des SFX en fonction des actions du personnages : un son différent selon le matériaux où le personnage se trouve, quand on appui sur un bouton du menu, quand un NPC parle Peu d'ennemi pendant les niveaux, principalement des boss à la fin de chaque dimensions.  
 
 Commandes :  
   
