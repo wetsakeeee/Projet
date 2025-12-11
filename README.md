@@ -52,7 +52,9 @@ SFX et Musiques de fond : https://www.youtube.com/watch?v=pcdB2s2y4Qc
 Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
 Animation personnage : https://www.youtube.com/watch?v=M6e3_8LHc7A
 
- 
+
+ # LE PLAN DU MENU  
+ <img width="1152" height="648" alt="exemple" src="https://github.com/user-attachments/assets/fcf84eb0-5bf1-4208-9c2f-fa659b65b8b1" />
 
 
 
