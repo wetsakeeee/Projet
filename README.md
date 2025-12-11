@@ -12,4 +12,4 @@ Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA
 Sur le menu il y aura : paramètre, choix du personnages, lancer une partie et sauvegarder la partie  
   
   
-Ca sera un jeu solo, 2d, avec des graphiques simples/pixelisés. Il contiendra des dialogues avec des NPC 
+Ca sera un jeu solo, 2d, avec des graphiques simples/pixelisés. Il contiendra des dialogues avec des NPC, avec des musiques et des SFX
