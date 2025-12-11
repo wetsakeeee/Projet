@@ -7,7 +7,7 @@
 Nous souhaitons faire un jeu en 2d. Avec des graphismes du type "Celeste".  
 Le personnage principal est coincé en enfer et doit essayer de remonter sur terre, en passant par 3 dimensions contenant 2-3 niveaux:  
 - L'Enfer
-- Le Purgatoire
+- Le Purigatoire
 - Le Paradis  
   
 Il peut y avoir des sauts décisifs (si on rate = on recommence)
