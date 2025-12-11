@@ -25,13 +25,13 @@ Il y aura une musique de fond dans l'écran du menu qui durera moins d'une minut
 
 Commandes :  
   
-Saut = Espace
-Aller à droite = d
-Aller à gauche = q
-S'accrocher à des liannes/tiroliennes, lire des panneaux = z
-Se Baisser = s
-Attaquer = Click gauche
-Pause = Echap
+Saut = Espace  
+Aller à droite = d  
+Aller à gauche = q  
+S'accrocher à des liannes/tiroliennes, lire des panneaux = z  
+Se Baisser = s  
+Attaquer = Click gauche  
+Pause = Echap  
 
 Système de score : Temps par niveaux et temps total
 Il aura  vies, où il recommencera tout le niveau si il les perds. Les checkpoints seront fréquents. 
