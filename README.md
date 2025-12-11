@@ -10,4 +10,3 @@ Le personnage principal est coincé en enfer et doit essayer de remonter sur ter
 C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.  
 Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
 Sur le menu il y aura : paramètre, choix du personnages, lancer une partie et sauvegarder la partie
-gyytyh
