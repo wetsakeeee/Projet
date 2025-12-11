@@ -14,7 +14,7 @@ Il peut y avoir des sauts décisifs (si on rate = on recommence)
 
 C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.  
 Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
-Sur le menu il y aura : paramètre, choix du personnages, lancer une partie et sauvegarder la partie  
+Sur le menu il y aura : paramètre, choix du personnages, lancer une partie
 Un cheatcode sera donné à la fin de chaque niveaux permettant au joueur de retourner au dernier niveau terminé. 
 
 
