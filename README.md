@@ -14,7 +14,6 @@ Le personnage principal est coincé en enfer et doit essayer de remonter sur ter
 Il peut y avoir des sauts décisifs (si on rate = on recommence)
 
 C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.  
-Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
 Sur le menu il y aura : paramètre, choix du personnages, lancer une partie
 Un cheatcode sera donné à la fin de chaque niveaux permettant au joueur de retourner au dernier niveau terminé. 
 
@@ -47,8 +46,11 @@ Il aura 3 vies, où il recommencera tout le niveau si il les perds. Chaque vie s
 Les checkpoints seront fréquents. 
 
 
+## LIENS
+SFX et Musiques de fond : https://www.youtube.com/watch?v=pcdB2s2y4Qc  
+Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
 
-
+ 
 
 
 
