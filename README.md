@@ -14,7 +14,7 @@ Le personnage principal est coincé en enfer et doit essayer de remonter sur ter
 Il peut y avoir des sauts décisifs (si on rate = on recommence)
 
 C'est un jeu de parkour de plus en plus difficile avec des fonctionnalités évoluant au cours du jeu.  
-Sur le menu il y aura :  le bouton des paramètres: permettatnt de modifier le volume de la musique et des sons, le bouton où on rentre les cheatcodes, un bouton pour modifier le skin du personnages, et le bouton play pour lancer une partie.
+Sur le menu il y aura :  le bouton des paramètres: permettant de modifier le volume de la musique et des sons, le bouton où on rentre les cheatcodes, un bouton pour modifier le skin du personnages, et le bouton play pour lancer une partie.
 Un cheatcode sera donné à la fin de chaque niveaux permettant au joueur de retourner au dernier niveau terminé.  
 On utilisera la bibliothèque pygame.
 
