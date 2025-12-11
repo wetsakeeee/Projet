@@ -17,16 +17,18 @@ Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA
 Sur le menu il y aura : paramètre, choix du personnages, lancer une partie
 Un cheatcode sera donné à la fin de chaque niveaux permettant au joueur de retourner au dernier niveau terminé. 
 
-
+## ASPECT SONORE ET GRAPHIQUE
   
 Ca sera un jeu solo et en 2d.  
 Pour ce qui concerne les graphismes, ça sera des graphismes simples et pixelisés, et pour cela on va utiliser Pygame.  
 Le jeu contiendra des dialogues avec des NPC, qui nous servira à obtenir des vies, à comprendre l'histoire et à avancer dans les niveaux. 
 Il y aura une musique de fond dans l'écran du menu qui durera moins d'une minute et sera joué en boucle, jusqu'à que le joueur appui sur le bouton Jouer. Dans les niveaux, il y aura avec des musiques de fond, qui aura un lien avec la dimension où le joueur se trouve et des SFX en fonction des actions du personnages : un son différent selon le matériaux où le personnage se trouve, quand on appui sur un bouton du menu, quand un NPC parle.  
 
-Pendant les niveaux, il y aura peu d'ennemis pour faciliter la jouabilité du joueur. Ces ennemis seront mobile, allant de droite à gauche aléatoirement, et dès que le joueur et l'ennemi ont une distance de environ 3 blocs, l'ennemi va courser le joueur pour lui faire des dégats. A la fin de chaque dimension, il y aura principalement des boss, qui seront immobiles et présent en arrière plan, et qui nous lancera des projectiles. Il ne faudra pas le tuer, mais s'échapper de la dimension, en esquivant ses projectiles. Pour cela, on pourra se cacher
+## ENNEMIS :
 
-## Commandes :  
+Pendant les niveaux, il y aura peu d'ennemis pour faciliter la jouabilité du joueur. Ces ennemis seront mobile, allant de droite à gauche aléatoirement, et dès que le joueur et l'ennemi ont une distance de environ 3 blocs, l'ennemi va courser le joueur pour lui faire des dégats. A la fin de chaque dimension, il y aura principalement des boss, qui seront immobiles et présent en arrière plan, et qui nous lancera des projectiles. Il ne faudra pas le tuer, mais s'échapper de la dimension en atteignant une porte, qui nous menera vers la prochaine dimension. Pour esquiver ses projectiles, on pourra se cacher en dessous de plateformes par exemple, autrement on se déplace.
+
+## COMMANDES :  
   
 Saut = Espace
 Aller à droite = d
