@@ -30,13 +30,13 @@ Pendant les niveaux, il y aura peu d'ennemis pour faciliter la jouabilité du jo
 
 ## COMMANDES :  
   
-Saut = Espace
-Aller à droite = d
-Aller à gauche = q
-S'accrocher à des liannes/tyroliennes, lire des panneaux = z
-Se Baisser = s
-Pause = Echap
-
+Saut = Espace  
+Aller à droite = d  
+Aller à gauche = q  
+S'accrocher à des liannes/tyroliennes, lire des panneaux = z  
+Se Baisser = s  
+Pause = Echap  
+  
 Système de score : Temps par niveaux et temps total
 Il aura 3 vies, où il recommencera tout le niveau si il les perds. Chaque vie se perd :  
 - Dès qu'il tombe dans du vide
