@@ -43,7 +43,7 @@ se déplacer vers le haut (liannes, echelles) = z
 se deplacer vers le bas (liannes, echelles) = s  
   
 Système de score : Temps par niveaux et temps total
-Il aura 3 vies, où il recommencera tout le niveau si il les perds. Chaque vie se perd :  
+Il aura 3 vies, où il recommencera jusqu'au dernier checkpoint si il les perds. Chaque vie se perd :  
 - Dès qu'il touche des obstacles (feu, lave, piques..)
 - Dès qu'il tombe dans du vide
 - Dès que sa barre de vie descend à 0, initialement à 100  
