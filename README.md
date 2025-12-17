@@ -60,7 +60,7 @@ Animation personnage : https://www.youtube.com/watch?v=M6e3_8LHc7A
  <img width="1152" height="648" alt="exemple" src="https://github.com/user-attachments/assets/fcf84eb0-5bf1-4208-9c2f-fa659b65b8b1" />
 
  ## PLANNING
- Treelo:
+ Trello:
  https://trello.com/invite/b/69425909f4a82d12d69f3778/ATTIdc5d5a8a0052fd176c793b5242b94976B52CCB69/mon-tableau-trello
 
 
