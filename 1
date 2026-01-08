@@ -1,0 +1,56 @@
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((1280, 720))
+joueur = pygame.image.load("galileo.jpg").convert_alpha()
+image = pygame.transform.scale(joueur, (100, 100))
+clock = pygame.time.Clock()
+cube = pygame.Rect(500, 300, 50, 50)
+carres = []  
+
+running = True
+
+vitesse = 5 
+x = 0
+y = 30
+
+
+while running : 
+    
+    clock.tick(60)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    touches = pygame.key.get_pressed()
+
+    if touches[pygame.K_q]:  
+        x -= vitesse
+    if touches[pygame.K_d]:  
+        x += vitesse
+    if touches[pygame.K_z]:  
+        y -= vitesse
+    if touches[pygame.K_s]:  
+        y += vitesse
+
+    x = max(0, min(x, 1280 - 100))
+    y = max(0, min(y, 720 - 100))
+
+    joueur_rect = pygame.Rect(x, y, joueur.get_width(), joueur.get_height())
+    
+
+    if joueur_rect.colliderect(cube):
+        carres.append(pygame.Rect(100, 100, 20, 20)) 
+
+    screen.fill((0, 0, 0))
+    pygame.draw.rect(screen, (0, 255, 0), cube) 
+    screen.blit(image,(x, y))
+    pygame.display.flip()    
+    
+    for c in carres:
+        pygame.draw.rect(screen, (255, 0, 0), c)
+
+
+
+pygame.quit()
