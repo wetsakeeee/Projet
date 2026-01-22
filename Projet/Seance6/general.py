@@ -1,3 +1,5 @@
+import subprocess
+import sys
 import pygame
 from joueur import Joueur
 from niveau1 import get_plateformes
@@ -11,6 +13,9 @@ screen_width, screen_height = 1280, 720
 ecran = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Galileo Galilei")
 clock = pygame.time.Clock()
+etat = "jeu"
+vies = 3
+chute_y = 1000  
 
 # ----------------------------
 # Joueur
@@ -36,7 +41,7 @@ plateformes = get_plateformes()
 niveau_largeur = 2000  # largeur totale du niveau
 
 try:
-    platform_image_orig = pygame.image.load("images/platforme.jpg").convert_alpha()
+    platform_image_orig = pygame.image.load("platforme.jpg").convert_alpha()
 except:
     platform_image_orig = None
 
@@ -51,7 +56,7 @@ for plateforme in plateformes:
 # ----------------------------
 # Background zoomé
 # ----------------------------
-background_orig = pygame.image.load("images/background.png").convert_alpha()
+background_orig = pygame.image.load("background.png").convert_alpha()
 zoom_factor = 1.5
 bg_width = int(screen_width * zoom_factor)
 bg_height = int(screen_height * zoom_factor)
@@ -92,8 +97,19 @@ while running:
  
 
     # Déplacement et gravité
-    joueur.deplacement(plateformes)
-    joueur.appliquer_gravite(plateformes)
+    if etat == "jeu":
+        joueur.deplacement(plateformes)
+        joueur.appliquer_gravite(plateformes)
+
+        if joueur.rect.top > chute_y:
+            vies = 0
+            etat = "game_over"
+        
+    if etat == "game_over":
+        pygame.quit()
+        subprocess.run([sys.executable, "menu de fin.py"])
+        sys.exit()
+
 
     # Scrolling
     camera_x = joueur.rect.centerx - screen_width // 2
