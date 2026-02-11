@@ -3,7 +3,6 @@ import subprocess
 from joueur import Joueur
 from niveau1 import get_plateformes
 
-
 # ----------------------------
 # Initialisation Pygame
 # ----------------------------
@@ -19,25 +18,29 @@ etat = "jeu"
 vies = 3
 chute_y = 7000
 
+
+# Système d'invincibilité
+invincible = False
+invincibilite_temps = 0
+duree_invincibilite = 2000 
+
 # ----------------------------
 # Joueur
 # ----------------------------
 joueur = Joueur()
 moving_sprites = pygame.sprite.Group()
 moving_sprites.add(joueur)
+
 # ----------------------------
 # Music
 # ----------------------------
 pygame.mixer.init()
 ambient = pygame.mixer.Sound("music_enfer.mp3")
-
 ambient.set_volume(0.4)
 ambient.play(-1)  # -1 = boucle infinie
 
-
-
 # ----------------------------
-# Plateformes
+# Plateformes normales
 # ----------------------------
 plateformes = get_plateformes()
 niveau_largeur = 2000  # largeur totale du niveau
@@ -54,6 +57,13 @@ for plateforme in plateformes:
         platform_images.append(img)
     else:
         platform_images.append(None)
+
+
+plateformes_danger = [
+    pygame.Rect(1275, 6280, 530, 20),
+    pygame.Rect(800, 6280, 250, 20),
+    pygame.Rect(655, 5800, 150, 20)
+]
 
 # ----------------------------
 # Background zoomé
@@ -76,8 +86,11 @@ bg_offset_y = -300
 parallax_factor = 0.5
 
 
+# police pour afficher les vies
+font = pygame.font.Font(None, 48)
+
 # ----------------------------
-# Ajustement initial du joueur si il commence sur une plateforme
+# Ajustement initial du joueur
 # ----------------------------
 for plat in plateformes:
     if joueur.rect.colliderect(plat):
@@ -90,17 +103,11 @@ for plat in plateformes:
 running = True
 while running:
     clock.tick(60)
-
-
-
+    current_time = pygame.time.get_ticks()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
-
-
-
 
     keys = pygame.key.get_pressed()
 
@@ -115,26 +122,42 @@ while running:
 
     joueur.update()
 
-
-
-
     # Déplacement et gravité
     joueur.deplacement(plateformes)
     joueur.appliquer_gravite(plateformes)
 
+    # ----------------------------
+    # Collision avec plateformes de danger
+    # ----------------------------
+    if not invincible:
+        for plat_danger in plateformes_danger:
+            if joueur.rect.colliderect(plat_danger):
+                vies -= 1
+                invincible = True
+                invincibilite_temps = current_time
+                
+                if vies <= 0:
+                    etat = "game_over"
+                break
 
+    # Gestion de l'invincibilité
+    if invincible:
+        if current_time - invincibilite_temps > duree_invincibilite:
+            invincible = False
+
+    # Chute mortelle
     if joueur.rect.top > chute_y:
         vies = 0
         etat = "game_over"
+    
     if etat == "game_over":
         pygame.quit()
         subprocess.run(['python', 'menu_de_fin.py'])
         running = False
 
-
-
-
+    # ----------------------------
     # Scrolling
+    # ----------------------------
     camera_x = joueur.rect.centerx - screen_width // 2
     camera_x = max(0, min(camera_x, niveau_largeur - screen_width))
 
@@ -145,15 +168,9 @@ while running:
     bg_y = -camera_y * parallax_factor + bg_offset_y
     ecran.blit(background, (bg_x, bg_y))
 
-
-
-
-    ecran.blit(
-        joueur.image,
-        (joueur.rect.x - camera_x, joueur.rect.y - camera_y)
-    )
-
-
+    
+    # Affichage des plateformes normales
+    
     for plat, img in zip(plateformes, platform_images):
         if img:
             ecran.blit(
@@ -163,6 +180,40 @@ while running:
                     plat.y - camera_y + 95
                 )
             )
+
+    
+    # Affichage des plateformes de danger (rouges)
+    
+    for plat_danger in plateformes_danger:
+        pygame.draw.rect(
+            ecran,
+            (255, 0, 0),
+            (
+                plat_danger.x - camera_x,
+                plat_danger.y - camera_y,
+                plat_danger.width,
+                plat_danger.height
+            )
+        )
+        
+    ecran.blit(
+        joueur.image,
+        (joueur.rect.x - camera_x, joueur.rect.y - camera_y)
+    )
+
+    # ----------------------------
+    # Affichage des vies (en haut à gauche)
+    # ----------------------------
+    vie_text = font.render(f"Vies: {vies}", True, (255, 255, 255))
+    vie_rect = vie_text.get_rect(topleft=(20, 20))
+    ecran.blit(vie_text, vie_rect)
+
+    # affichage invincibilité 
+    if invincible:
+        invincible_text = font.render("INVINCIBLE", True, (255, 215, 0))
+        inv_rect = invincible_text.get_rect(topleft=(20, 70))
+        ecran.blit(invincible_text, inv_rect)
+
     moving_sprites.draw(ecran)
     moving_sprites.update()
     pygame.display.flip()
