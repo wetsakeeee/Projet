@@ -1,7 +1,7 @@
 import pygame
 import subprocess
 from joueur import Joueur
-from niveau1 import get_plateformes
+from niveau1 import get_plateformes, get_plateforme_danger
 
 # ----------------------------
 # Initialisation Pygame
@@ -59,11 +59,8 @@ for plateforme in plateformes:
         platform_images.append(None)
 
 
-plateformes_danger = [
-    pygame.Rect(1275, 6280, 530, 20),
-    pygame.Rect(800, 6280, 250, 20),
-    pygame.Rect(655, 5800, 150, 20)
-]
+# plateformes de danger
+plateformes_danger = get_plateforme_danger() 
 
 # ----------------------------
 # Background zoomé
@@ -195,24 +192,27 @@ while running:
                 plat_danger.height
             )
         )
-        
-    ecran.blit(
-        joueur.image,
-        (joueur.rect.x - camera_x, joueur.rect.y - camera_y)
-    )
+    
+    
+    # Affichage du joueur avec effet de clignotement si invincible
+    
+    afficher_joueur = True
+    if invincible:
+        # Clignotement : visible/invisible toutes les 100ms
+        afficher_joueur = (current_time // 100) % 2 == 0
+    
+    if afficher_joueur:
+        ecran.blit(
+            joueur.image,
+            (joueur.rect.x - camera_x, joueur.rect.y - camera_y)
+        )
 
-    # ----------------------------
-    # Affichage des vies (en haut à gauche)
-    # ----------------------------
+    
+    # Affichage des vies 
+    
     vie_text = font.render(f"Vies: {vies}", True, (255, 255, 255))
     vie_rect = vie_text.get_rect(topleft=(20, 20))
     ecran.blit(vie_text, vie_rect)
-
-    # affichage invincibilité 
-    if invincible:
-        invincible_text = font.render("INVINCIBLE", True, (255, 215, 0))
-        inv_rect = invincible_text.get_rect(topleft=(20, 70))
-        ecran.blit(invincible_text, inv_rect)
 
     moving_sprites.draw(ecran)
     moving_sprites.update()
