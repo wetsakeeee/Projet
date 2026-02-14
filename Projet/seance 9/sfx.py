@@ -1,7 +1,8 @@
 import pygame
-
+# --------------------------------------------
+# Fichier pour gérer tout les sons du programme
+# --------------------------------------------
 pygame.mixer.init()
-
 musiquefond = pygame.mixer.Sound("asset/sons/music_enfer.mp3")
 sauter = pygame.mixer.Sound("asset/sons/jump.mp3")
 musiquemenu = pygame.mixer.Sound("asset/sons/menu.mp3")
