@@ -113,6 +113,10 @@ while running:
                 son_bouton.play(0,0,0)
                 son_bouton.set_volume(0.5)
                 print("interface code")
+                time.sleep(0.3)
+                pygame.quit()
+                subprocess.run(['python', "codesauv.py"])
+                sys.exit()
             elif btn.action == "settings":
                 son_bouton.play(0,0,0)
                 son_bouton.set_volume(0.5)

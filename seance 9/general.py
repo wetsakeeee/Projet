@@ -1,9 +1,8 @@
 import pygame
 import subprocess
 from joueur import Joueur
-from niveau1 import get_plateformes, get_plateforme_danger
-from sfx import musiquefond, degat, sfxdialogue, fin, sfxnpc
-
+from niveau1 import get_plateforme_prison, get_plateformes, get_plateforme_danger
+import sfx
 # ----------------------------
 # Initialisation Pygame
 # ----------------------------
@@ -33,17 +32,17 @@ invincibilite_temps = 0
 duree_invincibilite = 2000
 
 # TITRE DEBUT DE JEU
-dialogue_sfx = sfxdialogue
+dialogue_sfx = sfx.sfxdialogue
 dialogue_sfx.set_volume(0.5)
 titre = "L'Enfer"
 titre_index = 0
 titre_fin = 0  # servira à savoir quand le titre a fini
-titre_sfx = fin
+titre_sfx = sfx.fin
 titre_sfx.set_volume(0.5)
 
 # Npc
 #npc 1
-npcsfx = sfxnpc
+npcsfx = sfx.sfxnpc
 npcsfx.set_volume(0.1)
 giordano = pygame.image.load("images/giordano.png").convert_alpha()
 giordano = pygame.transform.scale(giordano, (160, 105))
@@ -67,12 +66,16 @@ done = False
 
 # Music
 pygame.mixer.init(44100)
-ambient = musiquefond
+ambient = sfx.musiquefond
 ambient.set_volume(0.2)
 ambient.play(-1)  # -1 = boucle infinie
 
 # Plateformes normales
-plateformes = get_plateformes()
+plateformes_prison = get_plateforme_prison()
+plateformes_niveau = get_plateformes()
+
+plateformes = plateformes_prison + plateformes_niveau
+
 niveau_largeur = 2000  # largeur totale du niveau
 try:
     platform_image_orig = pygame.image.load("images/plateforme.png").convert_alpha()
@@ -158,7 +161,7 @@ while running:
         for plat_danger in plateformes_danger:
             if joueur.rect.colliderect(plat_danger):
                 vies -= 1
-                degat.play()
+                sfx.degat.play()
                 invincible = True
                 invincibilite_temps = current_time
                 if vies <= 0:
@@ -255,7 +258,7 @@ while running:
         screen.blit(titre_texte, (20, 100))
     else:
         if titre_fin > 0:
-            fin.play(loops=0)
+            sfx.fin.play(loops=0)
             titre_fin = -1
     pygame.display.flip()
 pygame.quit()

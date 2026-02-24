@@ -4,8 +4,6 @@ def get_plateformes():
     '''Retourne une liste de rectangles représentant les
     plateformes du niveau : (x, y, largeur, hauteur)'''
     return [
-         #------------Prison-------------
-        pygame.Rect(1750, 6000, 20,770),
         #-------------niveau------------- 
         pygame.Rect(-100, 6300, 2100, 350),
         pygame.Rect(300, 6200, 400, 80),
@@ -26,7 +24,11 @@ def get_plateformes():
         #------------Bordure-----------
         pygame.Rect(-250, 4000, 200, 4000),
     ]
-
+def get_plateforme_prison():
+    return [
+        #------------prison-------------
+        pygame.Rect(1750, 6000, 20, 770),
+    ]
 
 def get_plateforme_danger():
     return[
