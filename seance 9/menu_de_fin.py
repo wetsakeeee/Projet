@@ -7,11 +7,11 @@ pygame.mixer.init()
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 police_grande = pygame.font.SysFont(None, 80)
-police_petite = pygame.font.SysFont(None, 40)
+police_petite = pygame.font.Font("asset/polices/Coolvetica Rg.otf", 36)
 
-bouton_menu = pygame.Rect(490, 350, 300, 50)
-bouton_quitter = pygame.Rect(490, 420, 300, 50)
-bouton_rejouer = pygame.Rect(490, 490, 300, 50)
+bouton_rejouer= pygame.Rect(490, 350, 300, 50)
+bouton_menu = pygame.Rect(490, 420, 300, 50)
+bouton_quitter = pygame.Rect(490, 490, 300, 50)
 
 icon = pygame.image.load("images/logo.png").convert_alpha()
 pygame.display.set_icon(icon)
@@ -39,6 +39,7 @@ while running:
             running = False
     
     screen.blit(background, (0, 0))
+    mouse_pos = pygame.mouse.get_pos()
 
     if event.type == pygame.MOUSEBUTTONDOWN:
                 if bouton_menu.collidepoint(event.pos):
@@ -61,10 +62,13 @@ while running:
     texte = police_grande.render("GAME OVER", True, (255, 0, 0))
     screen.blit(texte, (640 - texte.get_width() // 2, 250))
 
-    pygame.draw.rect(screen, (0, 200, 0), bouton_menu)
-    pygame.draw.rect(screen, (200, 0, 0), bouton_quitter)
-    pygame.draw.rect(screen, (0, 200, 0), bouton_rejouer)
+    color_menu = (0,255,0) if bouton_menu.collidepoint(mouse_pos) else (0,200,0)
+    color_quitter = (255,0,0) if bouton_quitter.collidepoint(mouse_pos) else (200,0,0)
+    color_rejouer = (0,255,0) if bouton_rejouer.collidepoint(mouse_pos) else (0,200,0)
 
+    pygame.draw.rect(screen, color_menu, bouton_menu)
+    pygame.draw.rect(screen, color_quitter, bouton_quitter)
+    pygame.draw.rect(screen, color_rejouer, bouton_rejouer)
 
     texte_menu = police_petite.render("Menu Début", True, (255, 255, 255))
     texte_quitter = police_petite.render("Quitter ", True, (255, 255, 255))
