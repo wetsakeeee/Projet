@@ -37,24 +37,33 @@ def get_plateformes():
        
     ]
 def get_plateforme_prison():
+    '''Retourne une liste de rectangles représentant les
+    plateformes de la prison : (x, y, largeur, hauteur)'''
     return [
         #------------prison-------------
         pygame.Rect(1750, 6000, 20, 770),
         pygame.Rect(1200, 6000, 20, 770),
     ]
 
+
 def get_plateforme_danger():
+    '''Retourne une liste de rectangles représentant les
+    plateformes de danger : (x, y, largeur, hauteur)'''
     return[
-        pygame.Rect(1275,6200,530,20),
-        pygame.Rect(655,5800,150,20),
-        pygame.Rect(705,5050,150,95),
-        pygame.Rect(970, 4600,200,95),
+        pygame.Rect(1220, 6200, 530, 20),
+        pygame.Rect(600,  5800, 150, 20),
+        pygame.Rect(650,  5050, 150, 95),
+        pygame.Rect(915,  4600, 200, 95),
     ]
 def get_sol():
+    '''Retourne une liste de rectangles représentant le 
+    sol du niveau: (x, y, largeur, hauteur)'''
     return [
         pygame.Rect(-100,6300,2100,350)
     ]
 def get_mur():
+    '''Retourne une liste de rectangles représentant les
+    murs du niveau : (x, y, largeur, hauteur)'''
     return[
     pygame.Rect(-70, 3700, 90,700),
     ]
