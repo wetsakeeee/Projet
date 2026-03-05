@@ -194,7 +194,8 @@ while running:
     if invincible:
         # Clignotement : visible/invisible toutes les 100ms
         afficher_joueur = (current_time // 100) % 2 == 0
-    if afficher_joueur:screen.blit(joueur.image,(joueur.rect.x - camera_x, joueur.rect.y - camera_y))
+    if afficher_joueur:
+        screen.blit(joueur.image,(joueur.rect.x - camera_x - 59, joueur.rect.y - camera_y))
     
     # Affichage des plateformes
     for plat in plateformes:
@@ -211,7 +212,7 @@ while running:
             img_redim = pygame.transform.scale(img, (plat.width, plat.height))
             # Calculer le y pour que le bas de l'image corresponde au bas du rectangle
             y_aligne = plat.bottom - img_redim.get_height()
-            screen.blit(img_redim, (plat.x - camera_x + 55, y_aligne - camera_y + 100))
+            screen.blit(img_redim, (plat.x - camera_x , y_aligne - camera_y + 100))
     # Affichage des plateformes de danger (rouges)
     for plat_danger in plateformes_danger:
         pygame.draw.rect(
