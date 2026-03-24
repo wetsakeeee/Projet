@@ -6,7 +6,6 @@ from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plat
 import sfx
 import random
 import sys
-
 # ----------------------------
 # Initialisation Pygame
 # ----------------------------
@@ -17,11 +16,12 @@ icon = pygame.image.load("images/logo.png").convert_alpha()
 pygame.display.set_icon(icon)
 pygame.display.set_caption("Galileo Galilei")
 clock = pygame.time.Clock()
-
 etat = "jeu"
 vies = 3
 chute_y = 7000
 zoom_factor = 1.5
+camera_y_offset = -100
+debug_hitboxes = False  # Mettre à True pour afficher les hitboxes des plateformes de danger et du joueur
 
 coeur       = pygame.transform.scale(pygame.image.load("images/coeur.png").convert_alpha(), (100, 100))
 vie_text    = pygame.transform.scale(pygame.image.load("images/vie.png").convert_alpha(), (186, 72))
@@ -51,12 +51,11 @@ titre_index = 0
 titre_fin   = 0
 titre_sfx   = sfx.fin
 titre_sfx.set_volume(0.5)
-
 # Pancarte
 panneau = pygame.image.load("images/panneau.png").convert_alpha()
 panneau = pygame.transform.scale(panneau, (96, 150))
 panneau_rect = panneau.get_rect()
-panneau_rect.topleft = (800, 6270)
+panneau_rect.topleft = (800, 6150)
 pancarte_active        = False
 panneau_button_hidden  = False
 panneau_button_timer   = 0
@@ -64,12 +63,10 @@ pancarte = pygame.transform.scale(pygame.image.load("images/pancarte.png").conve
 lire_pancarte          = False
 pancarte_timer         = 0
 show_button_e_pancarte = False
-
 liresfx = sfx.liresfx
 liresfx.set_volume(0.5)
 stoplire = sfx.stoplire
 stoplire.set_volume(0.5)
-
 # --- INVENTAIRE ---
 icone_inventaire         = pygame.transform.scale(pygame.image.load("images/icone_inventaire.png").convert_alpha(), (100, 100))
 inventaire_img           = pygame.transform.scale(pygame.image.load("images/inventaire.png").convert_alpha(), (560, 630))
@@ -92,10 +89,10 @@ giordano_pause     = False
 giordano_pause_timer = 0
 
 giordano_rect = giordano.get_rect()
-giordano_rect.topleft = (1600, 6300)
+giordano_rect.topleft = (1600, 6190)
 
 bouton_e      = pygame.image.load("images/bouton_e.png").convert_alpha()
-bouton_e_rect = bouton_e.get_rect(topleft=(1600, 6250))
+bouton_e_rect = bouton_e.get_rect(topleft=(1600, 6150))
 bouton_e      = pygame.transform.scale(bouton_e, (50, 50))
 dialogue_g    = False
 cadre_g       = pygame.image.load("images/cadre_dialogue1.png").convert_alpha()
@@ -110,7 +107,7 @@ duree_cooldown    = 30000  # 30 secondes
 # NPC 2 — Virgilio
 virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (56, 112))
 virgilio_rect = virgilio.get_rect()
-virgilio_rect.topleft = (700, 4190)
+virgilio_rect.topleft = (700, 4090)
 dialogue_v    = False
 cadre_v       = pygame.image.load("images/cadre_dialogue2.png").convert_alpha()
 cadre_v_rect  = cadre_v.get_rect(center=(640, 550))
@@ -188,7 +185,6 @@ mur_prison_images = []
 for mur in plateformes_prison:
     img = pygame.transform.scale(mur_prison_orig, (mur.width, mur.height))
     mur_prison_images.append(img)
-
 # Background
 background_orig = pygame.image.load("images/background.png").convert_alpha()
 img_w, img_h    = background_orig.get_size()
@@ -331,7 +327,7 @@ while running:
         # Inventaire — ouvrir au clic sur l'icône
         if event.type == pygame.MOUSEBUTTONDOWN:
             icone_inv_rect = pygame.Rect(screen_width - 150, screen_height - 150, 100, 100)
-            if icone_inv_rect.collidepoint(event.pos) and not inventaire_affiche:
+            if icone_inv_rect.collidepoint(event.pos) and not inventaire_affiche and not lire_pancarte:
                 inventaire_affiche = True
                 joueur.peut_bouger = False
                 inventaire_timer = current_time
@@ -391,7 +387,7 @@ while running:
     # ---- Caméra ----
     camera_x = joueur.rect.centerx - screen_width // 2
     camera_x = max(0, min(camera_x, niveau_largeur - screen_width))
-    camera_y = joueur.rect.centery - screen_height // 2
+    camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
     camera_y = max(0, camera_y)
 
     bg_x = -camera_x * parallax_factor + bg_offset_x
@@ -402,18 +398,48 @@ while running:
     # ========================
     screen.blit(background, (bg_x, bg_y + 100))
 
+    # Joueur derriere le decor
+    afficher_joueur = True
+    if invincible:
+        afficher_joueur = (current_time // 100) % 2 == 0
+    if afficher_joueur:
+        sprite_x = joueur.rect.centerx - camera_x - joueur.image.get_width() // 2 + joueur.draw_offset_x
+        sprite_y = joueur.rect.bottom - camera_y - joueur.image.get_height() + joueur.draw_offset_y
+        screen.blit(joueur.image, (
+            sprite_x,
+            sprite_y
+))
+    screen.blit(panneau, (panneau_rect.x - camera_x, panneau_rect.y - camera_y))
+    screen.blit(giordano_images[current_giordano], (giordano_rect.x - camera_x, giordano_rect.y - camera_y))
+    screen.blit(virgilio, (virgilio_rect.x - camera_x, virgilio_rect.y - camera_y))
+
     # Murs prison
     for mur, img in zip(plateformes_prison, mur_prison_images):
         screen.blit(img, (mur.x - camera_x, mur.y - camera_y))
+    if debug_hitboxes:
+        for mur in plateformes_prison:
+            debug_surface = pygame.Surface((mur.width, mur.height), pygame.SRCALPHA)
+            debug_surface.fill((0, 0, 255, 100))
+            screen.blit(debug_surface, (mur.x - camera_x, mur.y - camera_y))
 
     # Plateformes normales
     for plat, img in zip(plateformes, platform_images):
         if img:
-            screen.blit(img, (plat.x - camera_x, plat.y - camera_y + 100))
+            screen.blit(img, (plat.x - camera_x, plat.y - camera_y))
+    if debug_hitboxes:
+        for plat in plateformes:
+            debug_surface = pygame.Surface((plat.width, plat.height), pygame.SRCALPHA)
+            debug_surface.fill((255, 0, 0, 100))
+            screen.blit(debug_surface, (plat.x - camera_x, plat.y - camera_y))
 
     # Sol
     for s, img in zip(sol, sol_images):
-        screen.blit(img, (s.x - camera_x, s.y - camera_y + 87))
+        screen.blit(img, (s.x - camera_x, s.y - camera_y - 15))
+    if debug_hitboxes:
+        for s in sol:
+            debug_surface = pygame.Surface((s.width, s.height), pygame.SRCALPHA)
+            debug_surface.fill((255, 128, 0, 100))
+            screen.blit(debug_surface, (s.x - camera_x, s.y - camera_y))
 
     # Pics sol
     for plat, img in zip(plateformes_danger, pic_sol_images):
@@ -423,6 +449,13 @@ while running:
     for plat, img in zip(plateformes_danger2, pic_plafond_images):
         screen.blit(img, (plat.x - camera_x, plat.y - camera_y))
 
+    # Debug hitboxes for danger platforms
+    if debug_hitboxes:
+        for plat in plateformes_danger + plateformes_danger2:
+            debug_surface = pygame.Surface((plat.width, plat.height), pygame.SRCALPHA)
+            debug_surface.fill((0, 255, 0, 100))  # Semi-transparent green
+            screen.blit(debug_surface, (plat.x - camera_x, plat.y - camera_y))
+
     # Plateformes hautes (murs invisibles)
     for plat_haute in plateformes_haute:
         pygame.draw.rect(screen, (0, 0, 0),
@@ -430,17 +463,15 @@ while running:
                           plat_haute.width, plat_haute.height))
 
     # Panneau
-    screen.blit(panneau, (panneau_rect.x - camera_x, panneau_rect.y - camera_y - 20))
     pancarte_active = joueur.rect.colliderect(panneau_rect) and not panneau_button_hidden
     if pancarte_active:
         screen.blit(bouton_e, (bouton_e_rect.x - camera_x - 700, bouton_e_rect.y - camera_y + button_offset))
 
-    # Joueur (clignotement si invincible)
-    afficher_joueur = True
-    if invincible:
-        afficher_joueur = (current_time // 100) % 2 == 0
-    if afficher_joueur:
-        screen.blit(joueur.image, (joueur.rect.x - camera_x - 59, joueur.rect.y - camera_y))
+    # Debug hitbox for player
+    if debug_hitboxes:
+        debug_surface = pygame.Surface((joueur.rect.width, joueur.rect.height), pygame.SRCALPHA)
+        debug_surface.fill((0, 255, 0, 100))  # Semi-transparent green
+        screen.blit(debug_surface, (joueur.rect.x - camera_x, joueur.rect.y - camera_y))
 
     # Effets double saut
     for effect in joueur.double_jump_effects:
@@ -449,32 +480,25 @@ while running:
         screen.blit(effect_surface, (effect['x'] - camera_x - effect['width'] // 2, effect['y'] - camera_y))
 
     # Giordano animé
-    screen.blit(giordano_images[current_giordano], (giordano_rect.x - camera_x, giordano_rect.y - camera_y))
-
     # Virgilio
-    screen.blit(virgilio, (virgilio_rect.x - camera_x, virgilio_rect.y - camera_y))
-
     # Vies HUD
     if not lire_pancarte:
         screen.blit(vie_text, (20, 20))
-    for i in range(vies):
-        screen.blit(coeur, (230 + i * 110, 5))
+        for i in range(vies):
+            screen.blit(coeur, (230 + i * 110, 5))  
 
     # Icône double saut HUD (visible seulement si le double saut est débloqué)
-    if joueur.double_saut:
+    if joueur.double_saut and not lire_pancarte:
         screen.blit(double_jump, (screen_width - 150, screen_height - 260))
 
     # Icône inventaire HUD
-    screen.blit(icone_inventaire, (screen_width - 150, screen_height - 150))
+    if not lire_pancarte:
+        screen.blit(icone_inventaire, (screen_width - 150, screen_height - 150))
 
     joueur.update()
 
     # Zone de détection joueur pour les NPC
-    player_visual_rect = pygame.Rect(
-        joueur.rect.x - (150 - 32) // 2,
-        joueur.rect.y - (150 - 32) // 2,
-        150, 150
-    )
+    player_visual_rect = joueur.rect
 
     # Giordano — bouton E + dialogue
     active = player_visual_rect.colliderect(giordano_rect)
