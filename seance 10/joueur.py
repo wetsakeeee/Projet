@@ -10,8 +10,11 @@ class Joueur(pygame.sprite.Sprite):
 
         self.idle_image = pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur000.png").convert_alpha(), (30,30))
         self.image = self.idle_image
-        #self.rect = pygame.Rect(100, 6299, 32, 32)
-        self.rect = pygame.Rect(1960, 3000, 32, 32)
+        self.rect = pygame.Rect(0, 0, 50, 100)
+        self.rect.center = (100, 6299)
+        self.draw_offset_x = 8
+        self.draw_offset_y = 15
+        self.rect = pygame.Rect(1900, 3000, 50, 100) # Enlever le commentaire pour le mettre en haut
         self.sprites = []
         self.sprites.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur000.png").convert_alpha(),(150,150)))
         self.sprites.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur001.png").convert_alpha(),(150,150)))
@@ -180,5 +183,3 @@ class Joueur(pygame.sprite.Sprite):
             effect['alpha'] -= 15  # diminuer l'opacité
             if effect['alpha'] <= 0:
                 self.double_jump_effects.remove(effect)
-
-double_saut = False
