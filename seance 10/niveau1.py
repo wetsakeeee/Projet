@@ -16,7 +16,6 @@ def get_plateformes():
         pygame.Rect(1200, 5370, 100, 40),
         pygame.Rect(1400, 5370, 100, 40),
         pygame.Rect(1500, 5250, 100, 40),
-        pygame.Rect(1450, 5150, 100, 40),
         pygame.Rect(1270, 5150, 100, 40),
         pygame.Rect(1100, 5150, 100,40),
         pygame.Rect(800, 5050, 200,40),
@@ -35,7 +34,7 @@ def get_plateformes():
         pygame.Rect(1865, 2650, 110,40),
         pygame.Rect(1570, 2650, 110,40),
         pygame.Rect(1700,2460,300,40),
-        pygame.Rect(1865,2200,200,40),
+        pygame.Rect(1865,2100,200,40),
         pygame.Rect(1700,1800,100,40),
         pygame.Rect(1875,1400,100,40),
         #------------Bordure-----------
@@ -58,15 +57,18 @@ def plateforme_pic():
     '''Retourne une liste de rectangles représentant les
     plateformes de danger : (x, y, largeur, hauteur)'''
     return[
-        pygame.Rect(1220, 6200, 530, 20),
-        pygame.Rect(600,  5750, 150, 80),
-        pygame.Rect(650,  5050, 150, 95),
-        pygame.Rect(1865, 2800, 110,40),
-        pygame.Rect(1570, 2800, 110,40),
-        pygame.Rect(1700, 2455, 150,100),
+        pygame.Rect(1220, 6150, 530, 20),
+        pygame.Rect(1865, 2690, 110,40),
+        pygame.Rect(1570, 2690, 110,40),
     ]
 def plateforme_pic2():
-    return [pygame.Rect(945,  4600, 200, 95),
+    return [pygame.Rect(900,  4460, 200, 95),
+            pygame.Rect(600,  5660, 150, 80),
+            pygame.Rect(650,  5000, 150, 95),
+            pygame.Rect(1700, 2360, 150,100),
+
+
+
 ]
 def get_sol():
     '''Retourne une liste de rectangles représentant le 
@@ -84,6 +86,6 @@ def get_plateformeshaute():
     '''Retourne une liste de rectangles représentant les
     plateformes hautes (murs) : (x, y, largeur, hauteur)'''
     return[
-        pygame.Rect(1960,1140,40,2800),
-        pygame.Rect(1550,940,40,2800)
+        pygame.Rect(1960,1020,40,2800),
+        pygame.Rect(1550,860,40,2800)
     ]
