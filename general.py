@@ -17,7 +17,16 @@ clock = pygame.time.Clock()
 etat = "jeu"
 
 vies = 3
+# --- SPEEDRUN TIMER ---
+speedrun = True  # Passer à False pour désactiver
+speedrun_started = False
+speedrun_start_time = 0
+speedrun_elapsed = 0
 vie = sfx.viesfx
+# --- SPEEDRUN BLOCK
+speedrun_finish_rect = pygame.Rect(1875,1240, 80, 200)  # Ajuste les coordonnées selon ton niveau
+speedrun_finished = False
+speedrun_final_time = 0
 
 def ajouter_vie():
     global vies
@@ -133,6 +142,11 @@ messages      = ["GALILEO !!", "C'EST UN ENFER !"]
 giordano_cooldown = -30000
 virgilio_cooldown = -30000
 duree_cooldown    = 30000
+# Cooldowns anti-spam dialogue (pour éviter de spam le dialogue quand il est fini)
+giordano_dialogue_cooldown = -3000
+virgilio_dialogue_cooldown = -3000
+condamne1_dialogue_cooldown = -3000
+duree_dialogue_cooldown = 3000
 
 # NPC 2 — Virgilio
 virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (60, 120))
@@ -344,6 +358,7 @@ while running:
 
                 if inventaire_affiche and event.key != pygame.K_f:
                     continue
+                #---Giordano
                 if event.key == pygame.K_e and dialogue_g:
                     if not done:
                         counter = speed * len(message)
@@ -360,15 +375,18 @@ while running:
                             active_message = 0
                             counter = 0
                             joueur.peut_bouger = True
+                            giordano_dialogue_cooldown = current_time
                             if current_time - giordano_cooldown > duree_cooldown:
                                 giordano_cooldown = current_time
                                 ajouter_vie()
                 elif event.key == pygame.K_e and active and not dialogue_g:
-                    dialogue_g = True
-                    joueur.peut_bouger = False
-                    counter = 0
-                    active_message = 0
-                    message = messages[0]
+                    if current_time - giordano_dialogue_cooldown > duree_dialogue_cooldown:
+                        dialogue_g = True
+                        joueur.peut_bouger = False
+                        counter = 0
+                        active_message = 0
+                        message = messages[0]
+                #---Virgilio
                 elif event.key == pygame.K_e and dialogue_v:
                     if not done:
                         counter = speed * len(message2)
@@ -385,17 +403,20 @@ while running:
                             active_message2 = 0
                             counter = 0
                             joueur.peut_bouger = True
+                            virgilio_dialogue_cooldown = current_time
                             objet_dans_inventaire = True
                             bottes_dans_inventaire = True
                             if current_time - virgilio_cooldown > duree_cooldown:
                                 virgilio_cooldown = current_time
                                 ajouter_vie()
                 elif event.key == pygame.K_e and active2 and not dialogue_v:
-                    dialogue_v = True
-                    joueur.peut_bouger = False
-                    counter = 0
-                    active_message2 = 0
-                    message2 = message_v[0]
+                    if current_time - virgilio_dialogue_cooldown > duree_dialogue_cooldown:
+                        dialogue_v = True
+                        joueur.peut_bouger = False
+                        counter = 0
+                        active_message2 = 0
+                        message2 = message_v[0]
+                #---Condamné 1
                 elif event.key == pygame.K_e and dialogue_c1:
                     if not done:
                         counter = speed * len(message3)
@@ -412,12 +433,14 @@ while running:
                             active_message_c1 = 0
                             counter = 0
                             joueur.peut_bouger = True
+                            condamne1_dialogue_cooldown = current_time
                 elif event.key == pygame.K_e and active3 and not dialogue_c1:
-                    dialogue_c1 = True
-                    joueur.peut_bouger = False
-                    counter = 0
-                    active_message_c1 = 0
-                    message3 = message_c1[0]
+                    if current_time - condamne1_dialogue_cooldown > duree_dialogue_cooldown:
+                        dialogue_c1 = True
+                        joueur.peut_bouger = False
+                        counter = 0
+                        active_message_c1 = 0
+                        message3 = message_c1[0]
                 elif event.key == pygame.K_e and pancarte_active and not lire_pancarte:
                     lire_pancarte = True
                     joueur.peut_bouger = False
@@ -501,9 +524,15 @@ while running:
     if keys[pygame.K_d]:
         joueur.is_animating = True
         joueur.facing_left  = False
+        if speedrun and not speedrun_started:
+            speedrun_started = True
+            speedrun_start_time = current_time
     elif keys[pygame.K_q]:
         joueur.is_animating = True
         joueur.facing_left  = True
+        if speedrun and not speedrun_started:
+            speedrun_started = True
+            speedrun_start_time = current_time
     else:
         joueur.is_animating = False
     # ---- Timers ----
@@ -521,7 +550,10 @@ while running:
         joueur.deplacement(plateformes + plateformes_prison + sol)
         joueur.appliquer_gravite(plateformes + plateformes_prison + sol, murs=plateformes_haute)
         joueur.update_double_jump_effects()
-
+    if speedrun and speedrun_started and not speedrun_finished:
+        if joueur.rect.colliderect(speedrun_finish_rect):
+            speedrun_finished = True
+            speedrun_final_time = speedrun_elapsed
         if not invincible:
             for plat_danger in plateformes_danger + plateformes_danger2:
                 if joueur.rect.colliderect(plat_danger):
@@ -579,6 +611,7 @@ while running:
     screen.blit(panneau, (panneau_rect.x - camera_x, panneau_rect.y - camera_y))
     screen.blit(giordano_images[current_giordano], (giordano_rect.x - camera_x, giordano_rect.y - camera_y))
     screen.blit(virgilio, (virgilio_rect.x - camera_x, virgilio_rect.y - camera_y))
+    screen.blit(condamne1, (condamne1_rect.x - camera_x, condamne1_rect.y - camera_y))
 
     # Murs prison
     for mur, img in zip(plateformes_prison, mur_prison_images):
@@ -701,8 +734,7 @@ while running:
             npcsfx.stop()
             done = True
             screen.blit(bouton_e, (1020, 550 + button_offset))
-    # Condamné1 — affichage
-    screen.blit(condamne1, (condamne1_rect.x - camera_x, condamne1_rect.y - camera_y))
+
 
     # Condamné1 — bouton E + dialogue
     active3 = player_visual_rect.colliderect(condamne1_rect)
@@ -795,5 +827,34 @@ while running:
             fleche = police_bouton.render("▶", True, "#f5c542")
             if i == pause_selected:
                 screen.blit(fleche, (screen_width // 2 - texte.get_width() // 2 - 40, y_bouton))
+    # HUD — Timer Speedrun
+    if speedrun:
+        if speedrun_started and not en_pause and not speedrun_finished:
+            speedrun_elapsed = current_time - speedrun_start_time
+
+        ms   = speedrun_elapsed % 1000
+        sec  = (speedrun_elapsed // 1000) % 60
+        mins = (speedrun_elapsed // 60000)
+        timer_str = f"{mins:02d}:{sec:02d}.{ms // 10:02d}"
+
+        couleur_timer = (255, 215, 0) if speedrun_finished else (255, 255, 255)
+        timer_surf = police.render(timer_str, True, couleur_timer)
+        screen.blit(timer_surf, (screen_width - timer_surf.get_width() - 20, 20))
+
+        # Rectangle de fin visible dans le monde
+        if not speedrun_finished:
+            pygame.draw.rect(screen, (255, 215, 0),
+                            (speedrun_finish_rect.x - camera_x,
+                            speedrun_finish_rect.y - camera_y,
+                            speedrun_finish_rect.width,
+                            speedrun_finish_rect.height), 3)
+            fin_label = police.render("FIN", True, (255, 215, 0))
+            screen.blit(fin_label, (
+                speedrun_finish_rect.x - camera_x + speedrun_finish_rect.width // 2 - fin_label.get_width() // 2,
+                speedrun_finish_rect.y - camera_y - 30
+            ))
+        else:
+            fini_surf = police.render("TERMINÉ !", True, (255, 215, 0))
+            screen.blit(fini_surf, (screen_width - fini_surf.get_width() - 20, 50))
     pygame.display.flip()
 pygame.quit()
