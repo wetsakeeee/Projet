@@ -2,7 +2,6 @@ import pygame
 
 pygame.mixer.init(44100)
 
-
 musiquefond = pygame.mixer.Sound("asset/sons/music_enfer.mp3")
 sauter = pygame.mixer.Sound("asset/sons/jump.mp3")
 musiquemenu = pygame.mixer.Sound("asset/sons/menu.mp3")
@@ -24,3 +23,8 @@ fermer_inv = pygame.mixer.Sound("asset/sons/fermer_inventaire.mp3")
 selectsfx =  pygame.mixer.Sound("asset/sons/selectionner.mp3")
 # Le joueur tombe
 tombersfx = pygame.mixer.Sound("asset/sons/tomber.mp3")
+viesfx = pygame.mixer.Sound("asset/sons/gain_de_vie.mp3")
+# Pause
+pausesfxouvrir = pygame.mixer.Sound("asset/sons/pause_ouvrir.wav")
+pausesfxfermer = pygame.mixer.Sound("asset/sons/pause_fermer.wav")
+pausesfxbutton = pygame.mixer.Sound("asset/sons/pause_button.wav")
