@@ -174,6 +174,11 @@ class Joueur(pygame.sprite.Sprite):
             self.nb_sauts = 2
             self.dernier_saut = temps_actuel
             sound.play()
+            # Reset du timer de chute
+            self.timer_chute = temps_actuel
+            self.chute_son_joue = False
+            tombersfx.stop()
+            tombersfx.set_volume(0)
             self.double_jump_effects.append({
                 'x': self.rect.centerx,
                 'y': self.rect.y + 150,
