@@ -27,7 +27,7 @@ class Joueur(pygame.sprite.Sprite):
         # vvvv Enlever le commentaire pour le mettre en haut vvvv
         #self.rect = pygame.Rect(1900, 3000, 50, 100)
         # vvv Enlever le commentaire pour le mettre à côté de Virgilio
-        self.rect = pygame.Rect(700,4090, 50 ,100)
+        #self.rect = pygame.Rect(700,4090, 50 ,100)
 
         # Frame joueur normal
         self.sprites_normal = []
