@@ -15,7 +15,16 @@ pygame.display.set_icon(icon)
 pygame.display.set_caption("Galileo Galilei")
 clock = pygame.time.Clock()
 etat = "jeu"
+
 vies = 3
+vie = sfx.viesfx
+
+def ajouter_vie():
+    global vies
+    if vies < 3:
+        vies += 1
+        vie.play()
+
 chute_y = 7000
 zoom_factor = 1.5
 camera_y_offset = -100
@@ -82,6 +91,9 @@ show_button_f_inventaire   = False
 ouvrir_inv = sfx.ouvrir_inv
 fermer_inv = sfx.fermer_inv
 select     = sfx.selectsfx
+pause_ouvrir_sfx = sfx.pausesfxouvrir
+pause_fermer_sfx = sfx.pausesfxfermer
+pause_button_sfx = sfx.pausesfxbutton
 inventaire_vide_text       = police.render("Vous n'avez rien dans", True, "#7a371b")
 inventaire_vide_text2      = police.render("votre inventaire !", True, "#7a371b")
 lettre_f                   = police.render("F", True, "#1a0902")
@@ -123,9 +135,9 @@ virgilio_cooldown = -30000
 duree_cooldown    = 30000
 
 # NPC 2 — Virgilio
-virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (56, 112))
+virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (60, 120))
 virgilio_rect = virgilio.get_rect()
-virgilio_rect.topleft = (700, 4090)
+virgilio_rect.topleft = (700, 4080)
 dialogue_v    = False
 cadre_v       = pygame.image.load("images/cadre_dialogue2.png").convert_alpha()
 cadre_v_rect  = cadre_v.get_rect(center=(640, 550))
@@ -135,7 +147,7 @@ speed           = 5
 active_message  = 0
 message         = messages[active_message]
 done            = False
-message_v       = ["Salut Giordano !", "Prends ces bottes pour sauter deux fois."]
+message_v       = ["Salut Giordano !", "Fais gaffe car les plateformes deviennent hautes !","Prends ces bottes pour sauter deux fois."]
 active_message2 = 0
 message2        = message_v[active_message2]
 
@@ -244,6 +256,7 @@ boutons_pause = [
     {"texte": "Quitter",     "action": "quitter"},
 ]
 pause_selected = 0
+pause_hover_index = -1
 
 # -------------------------------------------------------------------------------------------------#
 # Boucle principale
@@ -296,20 +309,32 @@ while running:
                     joueur.peut_bouger = not en_pause
                     if en_pause:
                         pygame.mixer.pause()
+                        pause_ouvrir_sfx.play()
+                        pause_hover_index = pause_selected
                     else:
                         pygame.mixer.unpause()
+                        pause_fermer_sfx.play()
 
                 if en_pause:
                     if event.key == pygame.K_DOWN:
+                        ancien_pause_selected = pause_selected
                         pause_selected = (pause_selected + 1) % len(boutons_pause)
+                        if pause_selected != ancien_pause_selected:
+                            pause_button_sfx.play()
+                            pause_hover_index = pause_selected
                     if event.key == pygame.K_UP:
+                        ancien_pause_selected = pause_selected
                         pause_selected = (pause_selected - 1) % len(boutons_pause)
+                        if pause_selected != ancien_pause_selected:
+                            pause_button_sfx.play()
+                            pause_hover_index = pause_selected
                     if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                         action = boutons_pause[pause_selected]["action"]
                         if action == "reprendre":
                             en_pause = False
                             joueur.peut_bouger = True
                             pygame.mixer.unpause()
+                            pause_fermer_sfx.play()
                         elif action == "menu":
                             pygame.quit()
                             subprocess.run(['python', 'main.py'])
@@ -337,8 +362,7 @@ while running:
                             joueur.peut_bouger = True
                             if current_time - giordano_cooldown > duree_cooldown:
                                 giordano_cooldown = current_time
-                                if vies < 3:
-                                    vies += 1
+                                ajouter_vie()
                 elif event.key == pygame.K_e and active and not dialogue_g:
                     dialogue_g = True
                     joueur.peut_bouger = False
@@ -365,8 +389,7 @@ while running:
                             bottes_dans_inventaire = True
                             if current_time - virgilio_cooldown > duree_cooldown:
                                 virgilio_cooldown = current_time
-                                if vies < 3:
-                                    vies += 1
+                                ajouter_vie()
                 elif event.key == pygame.K_e and active2 and not dialogue_v:
                     dialogue_v = True
                     joueur.peut_bouger = False
@@ -430,7 +453,10 @@ while running:
                     x_bouton = screen_width // 2 - texte.get_width() // 2
                     rect_bouton = pygame.Rect(x_bouton, y_bouton, texte.get_width(), texte.get_height())
                     if rect_bouton.collidepoint(mx, my):
+                        if pause_hover_index != i:
+                            pause_button_sfx.play()
                         pause_selected = i
+                        pause_hover_index = i
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if en_pause:
@@ -446,6 +472,7 @@ while running:
                                 en_pause = False
                                 joueur.peut_bouger = True
                                 pygame.mixer.unpause()
+                                pause_fermer_sfx.play()
                             elif action == "menu":
                                 pygame.quit()
                                 subprocess.run(['python', 'main.py'])
@@ -479,7 +506,6 @@ while running:
         joueur.facing_left  = True
     else:
         joueur.is_animating = False
-
     # ---- Timers ----
     if inventaire_affiche and not show_button_f_inventaire:
         show_button_f_inventaire = True
@@ -648,7 +674,7 @@ while running:
         joueur.is_animating = False
         screen.blit(cadre_g, cadre_g_rect)
         screen.blit(snip, (480, 470))
-        if counter < speed * len(message):
+        if not en_pause and counter < speed * len(message):
             counter += 1
             if counter % speed == 0:
                 npcsfx.play()
@@ -667,7 +693,7 @@ while running:
         joueur.is_animating = False
         screen.blit(cadre_v, cadre_v_rect)
         screen.blit(snip, (480, 470))
-        if counter < speed * len(message2):
+        if not en_pause and counter < speed * len(message2):
             counter += 1
             if counter % speed == 0:
                 npcsfx.play()
@@ -691,7 +717,7 @@ while running:
         joueur.is_animating = False
         screen.blit(cadre_c1, cadre_c1_rect)
         screen.blit(snip, (480, 470))
-        if counter < speed * len(message3):
+        if not en_pause and counter < speed * len(message3):
             counter += 1
             if counter % speed == 0:
                 condamnesfx.play()
@@ -701,10 +727,10 @@ while running:
             screen.blit(bouton_e, (1020, 550 + button_offset))
 
     # Titre "L'Enfer"
-    if titre_index < speed * len(titre):
+    if not en_pause and titre_index < speed * len(titre):
         titre_index += 1
         dialogue_sfx.play()
-    elif titre_index >= speed * len(titre) and titre_fin == 0:
+    elif not en_pause and titre_index >= speed * len(titre) and titre_fin == 0:
         dialogue_sfx.stop()
         titre_fin = pygame.time.get_ticks()
 
