@@ -4,6 +4,7 @@ import math
 from joueur import Joueur
 from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute
 import sfx, random, sys
+import settings
 # ----------------------------
 # Initialisation Pygame
 # ----------------------------
@@ -18,13 +19,14 @@ etat = "jeu"
 
 vies = 3
 # --- SPEEDRUN TIMER ---
-speedrun = True  # Passer à False pour désactiver
+speedrun = settings.speedrun
 speedrun_started = False
 speedrun_start_time = 0
 speedrun_elapsed = 0
+speedrun_pause_start = None
 vie = sfx.viesfx
 # --- SPEEDRUN BLOCK
-speedrun_finish_rect = pygame.Rect(1875,1240, 80, 200)  # Ajuste les coordonnées selon ton niveau
+speedrun_finish_rect = pygame.Rect(1875,1240, 80, 200)  # Ajuste les coordonnÃ©es selon ton niveau
 speedrun_finished = False
 speedrun_final_time = 0
 
@@ -33,6 +35,18 @@ def ajouter_vie():
     if vies < 3:
         vies += 1
         vie.play()
+
+def mettre_speedrun_en_pause(temps_actuel):
+    global speedrun_pause_start
+    if speedrun and speedrun_started and not speedrun_finished and speedrun_pause_start is None:
+        speedrun_pause_start = temps_actuel
+
+def reprendre_speedrun_apres_pause(temps_actuel):
+    global speedrun_start_time, speedrun_pause_start
+    if speedrun_pause_start is None:
+        return
+    speedrun_start_time += temps_actuel - speedrun_pause_start
+    speedrun_pause_start = None
 
 chute_y = 7000
 zoom_factor = 1.5
@@ -54,7 +68,7 @@ else:
 moving_sprites = pygame.sprite.Group()
 moving_sprites.add(joueur)
 
-# Système d'invincibilité
+# SystÃ¨me d'invincibilitÃ©
 invincible          = False
 invincibilite_temps = 0
 duree_invincibilite = 2000
@@ -106,14 +120,14 @@ pause_button_sfx = sfx.pausesfxbutton
 inventaire_vide_text       = police.render("Vous n'avez rien dans", True, "#7a371b")
 inventaire_vide_text2      = police.render("votre inventaire !", True, "#7a371b")
 lettre_f                   = police.render("F", True, "#1a0902")
-# Équipement bottes
+# Ã‰quipement bottes
 bottes_equipees        = False
 tooltip_bottes_visible = False
 
 # Bruit/sfx dialogue de npc
 npcsfx = sfx.sfxnpc
 npcsfx.set_volume(0.1)
-# NPC 1 — Giordano (animation 3 frames)
+# NPC 1 â€” Giordano (animation 3 frames)
 
 giordano  = pygame.transform.scale(pygame.image.load("images/giordano.png").convert_alpha(),  (160, 105))
 giordano2 = pygame.transform.scale(pygame.image.load("images/giordano2.png").convert_alpha(), (160, 105))
@@ -142,13 +156,13 @@ messages      = ["GALILEO !!", "C'EST UN ENFER !"]
 giordano_cooldown = -30000
 virgilio_cooldown = -30000
 duree_cooldown    = 30000
-# Cooldowns anti-spam dialogue (pour éviter de spam le dialogue quand il est fini)
+# Cooldowns anti-spam dialogue (pour Ã©viter de spam le dialogue quand il est fini)
 giordano_dialogue_cooldown = -3000
 virgilio_dialogue_cooldown = -3000
 condamne1_dialogue_cooldown = -3000
 duree_dialogue_cooldown = 3000
 
-# NPC 2 — Virgilio
+# NPC 2 â€” Virgilio
 virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (60, 120))
 virgilio_rect = virgilio.get_rect()
 virgilio_rect.topleft = (700, 4080)
@@ -165,7 +179,7 @@ message_v       = ["Salut Giordano !", "Fais gaffe car les plateformes deviennen
 active_message2 = 0
 message2        = message_v[active_message2]
 
-# NPC 3 -- Condamnés
+# NPC 3 -- CondamnÃ©s
 condamnesfx = sfx.dialogue_csfx
 condamne1 = pygame.transform.scale(pygame.image.load("images/condamne1.png").convert_alpha(), (112, 112))
 condamne1_rect = condamne1.get_rect()
@@ -184,8 +198,11 @@ plateformes_haute = get_plateformeshaute()
 # Music
 pygame.mixer.init(44100)
 ambient = sfx.musiquefond
-ambient.set_volume(0.2)
-ambient.play(-1)
+if settings.musique:
+    ambient.set_volume(0.2)
+    ambient.play(-1)
+else:
+    ambient.set_volume(0)
 
 # Plateformes
 plateformes_prison = get_plateforme_prison()
@@ -268,9 +285,12 @@ boutons_pause = [
     {"texte": "Reprendre",   "action": "reprendre"},
     {"texte": "Menu",        "action": "menu"},
     {"texte": "Quitter",     "action": "quitter"},
+    {"texte": "Parametres",     "action": "parametres"},
 ]
 pause_selected = 0
 pause_hover_index = -1
+pause_button_width = 280
+pause_button_height = 56
 
 # -------------------------------------------------------------------------------------------------#
 # Boucle principale
@@ -312,7 +332,7 @@ while running:
                 giordano_anim_timer = current_time
             giordano_pause = False
 
-    # ---- Événements ----
+    # ---- Ã‰vÃ©nements ----
     for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -322,10 +342,14 @@ while running:
                     en_pause = not en_pause
                     joueur.peut_bouger = not en_pause
                     if en_pause:
+                        mettre_speedrun_en_pause(current_time)
+                        joueur.mettre_en_pause(current_time)
                         pygame.mixer.pause()
                         pause_ouvrir_sfx.play()
                         pause_hover_index = pause_selected
                     else:
+                        reprendre_speedrun_apres_pause(current_time)
+                        joueur.reprendre_apres_pause(current_time)
                         pygame.mixer.unpause()
                         pause_fermer_sfx.play()
 
@@ -347,6 +371,8 @@ while running:
                         if action == "reprendre":
                             en_pause = False
                             joueur.peut_bouger = True
+                            reprendre_speedrun_apres_pause(current_time)
+                            joueur.reprendre_apres_pause(current_time)
                             pygame.mixer.unpause()
                             pause_fermer_sfx.play()
                         elif action == "menu":
@@ -355,6 +381,7 @@ while running:
                             running = False
                         elif action == "quitter":
                             running = False
+                    continue
 
                 if inventaire_affiche and event.key != pygame.K_f:
                     continue
@@ -416,7 +443,7 @@ while running:
                         counter = 0
                         active_message2 = 0
                         message2 = message_v[0]
-                #---Condamné 1
+                #---CondamnÃ© 1
                 elif event.key == pygame.K_e and dialogue_c1:
                     if not done:
                         counter = speed * len(message3)
@@ -471,10 +498,9 @@ while running:
             if event.type == pygame.MOUSEMOTION and en_pause:
                 mx, my = event.pos
                 for i, bouton in enumerate(boutons_pause):
-                    texte = police_bouton.render(bouton["texte"], True, "white")
                     y_bouton = 350 + i * 80
-                    x_bouton = screen_width // 2 - texte.get_width() // 2
-                    rect_bouton = pygame.Rect(x_bouton, y_bouton, texte.get_width(), texte.get_height())
+                    x_bouton = screen_width // 2 - pause_button_width // 2
+                    rect_bouton = pygame.Rect(x_bouton, y_bouton, pause_button_width, pause_button_height)
                     if rect_bouton.collidepoint(mx, my):
                         if pause_hover_index != i:
                             pause_button_sfx.play()
@@ -485,15 +511,16 @@ while running:
                 if en_pause:
                     mx, my = event.pos
                     for i, bouton in enumerate(boutons_pause):
-                        texte = police_bouton.render(bouton["texte"], True, "white")
                         y_bouton = 350 + i * 80
-                        x_bouton = screen_width // 2 - texte.get_width() // 2
-                        rect_bouton = pygame.Rect(x_bouton, y_bouton, texte.get_width(), texte.get_height())
+                        x_bouton = screen_width // 2 - pause_button_width // 2
+                        rect_bouton = pygame.Rect(x_bouton, y_bouton, pause_button_width, pause_button_height)
                         if rect_bouton.collidepoint(mx, my):
                             action = bouton["action"]
                             if action == "reprendre":
                                 en_pause = False
                                 joueur.peut_bouger = True
+                                reprendre_speedrun_apres_pause(current_time)
+                                joueur.reprendre_apres_pause(current_time)
                                 pygame.mixer.unpause()
                                 pause_fermer_sfx.play()
                             elif action == "menu":
@@ -521,13 +548,13 @@ while running:
                             tooltip_bottes_visible = False
     # ---- Touches maintenues ----
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_d]:
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
         joueur.is_animating = True
         joueur.facing_left  = False
         if speedrun and not speedrun_started:
             speedrun_started = True
             speedrun_start_time = current_time
-    elif keys[pygame.K_q]:
+    elif keys[pygame.K_q] or keys[pygame.K_LEFT]:
         joueur.is_animating = True
         joueur.facing_left  = True
         if speedrun and not speedrun_started:
@@ -550,10 +577,7 @@ while running:
         joueur.deplacement(plateformes + plateformes_prison + sol)
         joueur.appliquer_gravite(plateformes + plateformes_prison + sol, murs=plateformes_haute)
         joueur.update_double_jump_effects()
-    if speedrun and speedrun_started and not speedrun_finished:
-        if joueur.rect.colliderect(speedrun_finish_rect):
-            speedrun_finished = True
-            speedrun_final_time = speedrun_elapsed
+
         if not invincible:
             for plat_danger in plateformes_danger + plateformes_danger2:
                 if joueur.rect.colliderect(plat_danger):
@@ -572,6 +596,11 @@ while running:
             vies = 0
             etat = "game_over"
 
+    if speedrun and speedrun_started and not speedrun_finished:
+        if joueur.rect.colliderect(speedrun_finish_rect):
+            speedrun_finished = True
+            speedrun_final_time = speedrun_elapsed
+
     if invincible and current_time - invincibilite_temps > duree_invincibilite:
         invincible = False
 
@@ -585,7 +614,7 @@ while running:
         running = False
         break
 
-    # ---- Caméra ----
+    # ---- CamÃ©ra ----
     camera_x = joueur.rect.centerx - screen_width // 2
     camera_x = max(0, min(camera_x, niveau_largeur - screen_width))
     camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
@@ -677,28 +706,28 @@ while running:
         effect_surface.fill((255, 255, 255, effect['alpha']))
         screen.blit(effect_surface, (effect['x'] - camera_x - effect['width'] // 2, effect['y'] - camera_y))
 
-    # HUD — Vies
+    # HUD â€” Vies
     if not lire_pancarte:
         screen.blit(vie_text, (20, 20))
         for i in range(vies):
             screen.blit(coeur, (230 + i * 110, 5))
 
-    # HUD — Icône double saut (si débloqué)
+    # HUD â€” IcÃ´ne double saut (si dÃ©bloquÃ©)
     if joueur.double_saut and not lire_pancarte:
         screen.blit(double_jump, (screen_width - 150, screen_height - 260))
 
-    # HUD — Icône inventaire
+    # HUD â€” IcÃ´ne inventaire
     if not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1:
         screen.blit(icone_inventaire, (screen_width - 150, screen_height - 150))
         screen.blit(lettre_f, (screen_width - 107, screen_height - 175))    
     
     joueur.update()
 
-    # Zone de détection joueur pour les NPC
+    # Zone de dÃ©tection joueur pour les NPC
     player_visual_rect = joueur.rect
     active = player_visual_rect.colliderect(giordano_rect)
 
-    # Giordano — bouton E + dialogue
+    # Giordano â€” bouton E + dialogue
     if active and not dialogue_g:
         screen.blit(bouton_e, (bouton_e_rect.x - camera_x, bouton_e_rect.y - camera_y + button_offset))
     if dialogue_g:
@@ -716,7 +745,7 @@ while running:
             done = True
             screen.blit(bouton_e, (1000, 600 + button_offset))
 
-    # Virgilio — bouton E + dialogue
+    # Virgilio â€” bouton E + dialogue
     active2 = player_visual_rect.colliderect(virgilio_rect)
     if active2 and not dialogue_v:
         screen.blit(bouton_e, ((bouton_e_rect.x - 900) - camera_x, (bouton_e_rect.y - 2110) - camera_y + button_offset))
@@ -736,7 +765,7 @@ while running:
             screen.blit(bouton_e, (1020, 550 + button_offset))
 
 
-    # Condamné1 — bouton E + dialogue
+    # CondamnÃ©1 â€” bouton E + dialogue
     active3 = player_visual_rect.colliderect(condamne1_rect)
     if active3 and not dialogue_c1:
         screen.blit(bouton_e, (
@@ -819,15 +848,19 @@ while running:
 
         # Boutons
         for i, bouton in enumerate(boutons_pause):
-            couleur = "#f5c542" if i == pause_selected else "white"
-            texte = police_bouton.render(bouton["texte"], True, couleur)
             y_bouton = 350 + i * 80
-            screen.blit(texte, (screen_width // 2 - texte.get_width() // 2, y_bouton))
-            # Flèche sur le bouton sélectionné
-            fleche = police_bouton.render("▶", True, "#f5c542")
+            x_bouton = screen_width // 2 - pause_button_width // 2
+            rect_bouton = pygame.Rect(x_bouton, y_bouton, pause_button_width, pause_button_height)
+            couleur_texte = "#f5c542" if i == pause_selected else "white"
+            texte = police_bouton.render(bouton["texte"], True, couleur_texte)
+            pygame.draw.rect(screen, "#521010", rect_bouton, border_radius=12)
+            pygame.draw.rect(screen, "#B65252", rect_bouton, 3, border_radius=12)
+            screen.blit(texte, (rect_bouton.centerx - texte.get_width() // 2, rect_bouton.centery - texte.get_height() // 2))
+            fleche = police_bouton.render(">", True, "#f5c542")
             if i == pause_selected:
-                screen.blit(fleche, (screen_width // 2 - texte.get_width() // 2 - 40, y_bouton))
-    # HUD — Timer Speedrun
+                screen.blit(fleche, (rect_bouton.x - 35, rect_bouton.centery - fleche.get_height() // 2))
+
+    # HUD - Timer Speedrun
     if speedrun:
         if speedrun_started and not en_pause and not speedrun_finished:
             speedrun_elapsed = current_time - speedrun_start_time
@@ -854,7 +887,10 @@ while running:
                 speedrun_finish_rect.y - camera_y - 30
             ))
         else:
-            fini_surf = police.render("TERMINÉ !", True, (255, 215, 0))
+            fini_surf = police.render("TERMINE !", True, (255, 215, 0))
             screen.blit(fini_surf, (screen_width - fini_surf.get_width() - 20, 50))
     pygame.display.flip()
 pygame.quit()
+
+
+
