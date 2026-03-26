@@ -269,3 +269,21 @@ class Joueur(pygame.sprite.Sprite):
             effect['alpha'] -= 15
             if effect['alpha'] <= 0:
                 self.double_jump_effects.remove(effect)
+
+    # ------------------------------------------------------------------
+    def mettre_en_pause(self, temps_actuel):
+        self._pause_vel_y = self.vel_y
+        self._pause_vx = self.vx
+        self.vel_y = 0
+        self.vx = 0
+        self._pause_marche_timer = self.marche_timer
+        self._pause_timer_chute = self.timer_chute
+
+    # ------------------------------------------------------------------
+    def reprendre_apres_pause(self, temps_actuel):
+        self.vel_y = getattr(self, '_pause_vel_y', self.vel_y)
+        self.vx = getattr(self, '_pause_vx', self.vx)
+        # Décale les timers pour éviter des glitches audio/animation
+        duree_pause = temps_actuel - getattr(self, '_pause_marche_timer', temps_actuel)
+        self.marche_timer = temps_actuel - duree_pause
+        self.timer_chute = temps_actuel - (temps_actuel - getattr(self, '_pause_timer_chute', temps_actuel))
