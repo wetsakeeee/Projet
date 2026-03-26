@@ -28,6 +28,8 @@ class Joueur(pygame.sprite.Sprite):
         #self.rect = pygame.Rect(1900, 3000, 50, 100)
         # vvv Enlever le commentaire pour le mettre à côté de Virgilio
         #self.rect = pygame.Rect(700,4090, 50 ,100)
+        #vvv Enlever le commentaire pour le mettre à côté de la porte enfer
+        #self.rect = pygame.Rect(285, 840, 50, 100)
 
         # Frame joueur normal
         self.sprites_normal = []
@@ -237,8 +239,8 @@ class Joueur(pygame.sprite.Sprite):
                 self.chute_son_joue = True
 
             if self.chute_son_joue:
-                progression = min((temps_en_air - 500) / 1000, 1.0)
-                tombersfx.set_volume(progression * 0.8)
+                progression = min((temps_en_air - 500) / 2000, 1.0)
+                tombersfx.set_volume(progression * 0.5)
 
         else:
             if self.en_chute:
