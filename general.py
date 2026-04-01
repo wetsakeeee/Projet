@@ -4,6 +4,7 @@ import math
 from joueur import Joueur
 from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute
 import sfx, random, sys
+from sfx import sauter, sfxmarche1, sfxmarche2, sfxmarche3, tombersfx
 import settings
 from pathlib import Path
 # ----------------------------
@@ -17,17 +18,40 @@ pygame.display.set_icon(icon)
 pygame.display.set_caption("Galileo Galilei")
 clock = pygame.time.Clock()
 etat = "jeu"
+
+debug_hitboxes = False
+
+death_animation_start = None
+death_sound_stage = 0
+DEATH_ANIMATION_SPEEDUP_MS = 300
+DEATH_HEART_ON_PLAYER_MS = 1000
+DEATH_HEART_TRAVEL_MS = 2000
+DEATH_HEART_CENTER_HOLD_MS = 2200
+DEATH_HAND_DELAY_MS = 3050
+DEATH_HAND_ENTER_MS = 2000
+DEATH_HAND_GRAB_MS = 500
+DEATH_HAND_EXIT_MS = 1700
+DEATH_SATAN_ENTER_MS = 1200
+DEATH_GAME_OVER_DELAY_MS = (
+    DEATH_HEART_ON_PLAYER_MS
+    + DEATH_HEART_TRAVEL_MS
+    + DEATH_HEART_CENTER_HOLD_MS
+    + DEATH_HAND_GRAB_MS
+    + DEATH_HAND_EXIT_MS
+    + DEATH_SATAN_ENTER_MS
+    + 4000
+    - DEATH_ANIMATION_SPEEDUP_MS
+)
 titre_logo = pygame.image.load("images/titre.png").convert_alpha()
 titre_rect = titre_logo.get_rect(midtop=(screen_width // 2, 100))
 
-vies = 3
+vies = 1
 # --- SPEEDRUN TIMER ---
 speedrun = settings.speedrun
 speedrun_started = False
 speedrun_start_time = 0
 speedrun_elapsed = 0
 speedrun_pause_start = None
-vie = sfx.viesfx
 # --- SPEEDRUN BLOCK
 speedrun_finish_rect = pygame.Rect(1875,1240, 80, 200)
 speedrun_finished = False
@@ -37,7 +61,7 @@ def ajouter_vie():
     global vies
     if vies < 3:
         vies += 1
-        vie.play()
+        sfx.sfxvie.play()
 # Porte de l'enfer
 porte = pygame.image.load("images/porte_enfer.png").convert_alpha()
 porte = pygame.transform.scale(porte, (380, 530)) 
@@ -54,6 +78,16 @@ def reprendre_speedrun_apres_pause(temps_actuel):
         return
     speedrun_start_time += temps_actuel - speedrun_pause_start
     speedrun_pause_start = None
+
+def couper_sons_pour_mort():
+    # Coupe tous les sons du jeu pour laisser uniquement ceux de la sequence de mort.
+    for son in (
+        ambient, sfx.degat, sfx.viesfx, sfx.sfxdialogue, sfx.fin, sfx.liresfx, sfx.stoplire,
+        sfx.ouvrir_inv, sfx.fermer_inv, sfx.selectsfx, sfx.pausesfxouvrir, sfx.pausesfxfermer,
+        sfx.pausesfxbutton, sfx.sfxnpc, sfx.dialogue_csfx, sfxmarche1, sfxmarche2, sfxmarche3,
+        sauter, tombersfx
+    ):
+        son.stop()
 
 # --- PARAMETRES ---
 SETTINGS_PATH = Path(__file__).with_name("settings.py")
@@ -77,12 +111,36 @@ def appliquer_parametre_jeu(param_name, enabled):
         settings.speedrun = enabled
     elif param_name == "option_3":
         settings.option_3 = enabled
+        vol = 0 if not enabled else 1.0
+        sfx.viesfx.set_volume(vol)
+        sfx.sfxdialogue.set_volume(0.5 if enabled else 0)
+        sfx.fin.set_volume(0.5 if enabled else 0)
+        sfx.liresfx.set_volume(0.5 if enabled else 0)
+        sfx.stoplire.set_volume(0.5 if enabled else 0)
+        sfx.ouvrir_inv.set_volume(vol)
+        sfx.fermer_inv.set_volume(vol)
+        sfx.selectsfx.set_volume(vol)
+        sfx.pausesfxouvrir.set_volume(vol)
+        sfx.pausesfxfermer.set_volume(vol)
+        sfx.pausesfxbutton.set_volume(vol)
+        sfx.sfxnpc.set_volume(0.1 if enabled else 0)
+        sfx.dialogue_csfx.set_volume(vol)
+        sfx.degat.set_volume(vol)
+        sfx.mortsfx.set_volume(vol)
+        sfx.satan.set_volume(vol)
+        sfxmarche1.set_volume(vol)
+        sfxmarche2.set_volume(vol)
+        sfxmarche3.set_volume(vol)
+        sauter.set_volume(0.2 if enabled else 0)
+        for s in [sfxmarche1, sfxmarche2, sfxmarche3]:
+            s.set_volume(0.5 if enabled else 0)
+
+        
     sauvegarder_settings()
 
 chute_y = 7000
 zoom_factor = 1.5
 camera_y_offset = -100
-debug_hitboxes = False
 
 coeur       = pygame.transform.scale(pygame.image.load("images/coeur.png").convert_alpha(), (100, 100))
 vie_text    = pygame.transform.scale(pygame.image.load("images/vie.png").convert_alpha(), (186, 72))
@@ -96,10 +154,8 @@ if len(sys.argv) == 3:
     joueur = Joueur(int(sys.argv[1]), int(sys.argv[2]))
 else:
     joueur = Joueur()
-moving_sprites = pygame.sprite.Group()
-moving_sprites.add(joueur)
 
-# Système d'invincibilité
+# SystÃ¨me d'invincibilité
 invincible          = False
 invincibilite_temps = 0
 duree_invincibilite = 2000
@@ -110,8 +166,7 @@ dialogue_sfx.set_volume(0.5)
 titre       = "L'Enfer"
 titre_index = 0
 titre_fin   = 0
-titre_sfx   = sfx.fin
-titre_sfx.set_volume(0.5)
+
 
 # Pancarte
 panneau = pygame.image.load("images/panneau.png").convert_alpha()
@@ -150,15 +205,15 @@ pause_fermer_sfx = sfx.pausesfxfermer
 pause_button_sfx = sfx.pausesfxbutton
 inventaire_vide_text       = police.render("Vous n'avez rien dans", True, "#7a371b")
 inventaire_vide_text2      = police.render("votre inventaire !", True, "#7a371b")
-lettre_f                   = police.render("F", True, "#1a0902")
-# Équipement bottes
+lettre_f                   = police.render("F", True, "#ffffff")
+# Ã‰quipement bottes
 bottes_equipees        = False
 tooltip_bottes_visible = False
 
 # Bruit/sfx dialogue de npc
 npcsfx = sfx.sfxnpc
 npcsfx.set_volume(0.1)
-# NPC 1 – Giordano (animation 3 frames)
+# NPC 1 â€“ Giordano (animation 3 frames)
 giordano  = pygame.transform.scale(pygame.image.load("images/giordano.png").convert_alpha(),  (160, 105))
 giordano2 = pygame.transform.scale(pygame.image.load("images/giordano2.png").convert_alpha(), (160, 105))
 giordano3 = pygame.transform.scale(pygame.image.load("images/giordano3.png").convert_alpha(), (160, 105))
@@ -182,6 +237,20 @@ cadre_g       = pygame.image.load("images/cadre_dialogue1.png").convert_alpha()
 cadre_g_rect  = cadre_g.get_rect(center=(640, 550))
 messages      = ["GALILEO !!", "C'EST UN ENFER !"]
 
+# Animation fin
+coeurt_mort = pygame.transform.scale(pygame.image.load("images/animation_fin/coeur_mort.png").convert_alpha(), (60, 60))
+main1 = pygame.transform.scale(pygame.image.load("images/animation_fin/main1.png").convert_alpha(), (1300, 600))
+main2 = pygame.transform.scale(pygame.image.load("images/animation_fin/main2.png").convert_alpha(), (1300, 600))
+satan1 = pygame.transform.scale(pygame.image.load("images/animation_fin/satan1.png").convert_alpha(), (1300, 600))
+satan1.set_colorkey((0, 0, 0))
+satan2 = pygame.transform.scale(pygame.image.load("images/animation_fin/satan2.png").convert_alpha(), (1300, 600))
+satan2.set_colorkey((0, 0, 0))
+
+coeursfx = sfx.coeursfx
+mortsfx = sfx.mortsfx
+mortsfx.set_volume(1.0 if settings.option_3 else 0)
+
+
 # --- Cooldowns NPC ---
 giordano_cooldown = -30000
 virgilio_cooldown = -30000
@@ -191,7 +260,7 @@ virgilio_dialogue_cooldown = -3000
 condamne1_dialogue_cooldown = -3000
 duree_dialogue_cooldown = 3000
 
-# NPC 2 – Virgilio
+# NPC 2 â€“ Virgilio
 virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (60, 120))
 virgilio_rect = virgilio.get_rect()
 virgilio_rect.topleft = (700, 4080)
@@ -233,12 +302,32 @@ if settings.musique:
 else:
     ambient.set_volume(0)
 
+# Appliquer sfx au démarrage
+if not settings.option_3:
+    _vol = 0
+    sfx.viesfx.set_volume(_vol)
+    sfx.sfxdialogue.set_volume(_vol)
+    sfx.fin.set_volume(_vol)
+    sfx.liresfx.set_volume(_vol)
+    sfx.stoplire.set_volume(_vol)
+    sfx.ouvrir_inv.set_volume(_vol)
+    sfx.fermer_inv.set_volume(_vol)
+    sfx.selectsfx.set_volume(_vol)
+    sfx.pausesfxouvrir.set_volume(_vol)
+    sfx.pausesfxfermer.set_volume(_vol)
+    sfx.pausesfxbutton.set_volume(_vol)
+    sfx.sfxnpc.set_volume(_vol)
+    sfx.dialogue_csfx.set_volume(_vol)
+    sfx.degat.set_volume(_vol)
+    sfx.mortsfx.set_volume(_vol)
+    sfx.satan.set_volume(_vol)
+
 # Plateformes
 plateformes_prison = get_plateforme_prison()
 plateformes_niveau = get_plateformes()
 plateformes        = plateformes_niveau
 sol                = get_sol()
-niveau_largeur     = 2000
+niveau_largeur     = 5000
 
 try:
     platform_image_orig  = pygame.image.load("images/plateforme_moyenne.png").convert_alpha()
@@ -306,6 +395,13 @@ for plat in plateformes:
         joueur.rect.bottom = plat.top
         joueur.vel_y = 0
 
+# ---- Variables pour la transition quand on recommence le niveau
+# Transition recommencer
+transition_recommencer = False
+transition_start = 0
+transition_duree_fondu = 500   # ms pour devenir noir
+transition_pause_noire = 2000   # ms d'attente écran noir avant reset
+transition_porte_enfer_start = 0
 # Pause
 en_pause = False
 police_pause  = pygame.font.Font("asset/polices/Dungeon Depths.otf", 80)
@@ -313,6 +409,7 @@ police_bouton = pygame.font.Font("asset/polices/ari-w9500-bold.ttf", 32)
 
 boutons_pause = [
     {"texte": "Reprendre",  "action": "reprendre"},
+    {"texte": "Recommencer",  "action": "recommencer"},
     {"texte": "Menu",       "action": "menu"},
     {"texte": "Parametres", "action": "parametres"},
     {"texte": "Quitter",    "action": "quitter"},
@@ -322,7 +419,7 @@ pause_hover_index = -1
 pause_button_width  = 280
 pause_button_height = 56
 
-# --- Menu paramètres en pause ---
+# --- Menu paramÃ¨tres en pause ---
 afficher_parametres_pause = False
 parametre_gui_pause  = pygame.transform.scale(pygame.image.load("images/parametre.png").convert_alpha(), (screen_width, screen_height))
 parametre_gui_rect_p = parametre_gui_pause.get_rect(center=(screen_width // 2, screen_height // 2))
@@ -337,14 +434,105 @@ parametres_toggles_pause = [
     {"name": "option_3", "enabled": settings.option_3, "rect": pygame.Rect(100, 350, 150, 75)},
 ]
 
+# Sert comme reset de progression quand le joueur veut
+# recommencer la partie
+def reset():
+    global vies, etat, invincible, invincibilite_temps
+    global death_animation_start, death_sound_stage
+    global speedrun, speedrun_started, speedrun_start_time, speedrun_elapsed, speedrun_pause_start, speedrun_finished, speedrun_final_time
+    global dialogue_g, dialogue_v, dialogue_c1
+    global active_message, active_message2, active_message_c1
+    global message, message2, message3
+    global counter, done
+    global giordano_cooldown, virgilio_cooldown
+    global giordano_dialogue_cooldown, virgilio_dialogue_cooldown, condamne1_dialogue_cooldown
+    global objet_dans_inventaire, bottes_dans_inventaire, bottes_equipees, tooltip_bottes_visible
+    global inventaire_affiche, lire_pancarte, pancarte_active, panneau_button_hidden
+    global titre_index, titre_fin
+    global en_pause, afficher_parametres_pause
+    tombersfx.stop()
+    sfx.mortsfx.stop()
+    sfx.coeursfx.stop()
+    sfx.coeurmort.stop()
+    sfx.satan.stop()
+    tombersfx.set_volume(0)
+    joueur.en_chute = False
+    joueur.chute_son_joue = False
+    joueur.chute_fadeout = False
+
+    vies = 3
+    etat = "jeu"
+    death_animation_start = None
+    death_sound_stage = 0
+    invincible = False
+    invincibilite_temps = 0
+
+    speedrun = settings.speedrun
+    speedrun_started = False
+    speedrun_start_time = 0
+    speedrun_elapsed = 0
+    speedrun_pause_start = None
+    speedrun_finished = False
+    speedrun_final_time = 0
+
+    dialogue_g = False
+    dialogue_v = False
+    dialogue_c1 = False
+    active_message = 0
+    active_message2 = 0
+    active_message_c1 = 0
+    message = messages[0]
+    message2 = message_v[0]
+    message3 = message_c1[0]
+    counter = 0
+    done = False
+
+    giordano_cooldown = -30000
+    virgilio_cooldown = -30000
+    giordano_dialogue_cooldown = -3000
+    virgilio_dialogue_cooldown = -3000
+    condamne1_dialogue_cooldown = -3000
+
+    objet_dans_inventaire = False
+    bottes_dans_inventaire = False
+    bottes_equipees = False
+    tooltip_bottes_visible = False
+    inventaire_affiche = False
+    lire_pancarte = False
+    pancarte_active = False
+    panneau_button_hidden = False
+
+    titre_index = 0
+    titre_fin = 0
+
+    en_pause = False
+    afficher_parametres_pause = False
+
+    joueur.rect.center = (100, 6299)
+    joueur.vel_y = 0
+    joueur.vx = 0
+    joueur.nb_sauts = 0
+    joueur.double_saut = False
+    joueur.au_sol = False
+    joueur.double_jump_effects = []
+    joueur.peut_bouger = True
+    joueur.en_chute = False
+    joueur.chute_son_joue = False
+    joueur.facing_left = False
+
+    pygame.mixer.unpause()
+
 # -------------------------------------------------------------------------------------------------#
 # Boucle principale
 # -------------------------------------------------------------------------------------------------#
 running = True
+jump_key_held = False
+ground_jump_consumed = False
 while running:
     clock.tick(60)
     current_time  = pygame.time.get_ticks()
     button_offset = int(math.sin(current_time * 0.01) * 3)
+    active_porte = joueur.rect.colliderect(porte_rect)
 
     # Animation de Giordano
     if not giordano_pause:
@@ -377,25 +565,44 @@ while running:
                 giordano_anim_timer = current_time
             giordano_pause = False
 
-    # ---- Évènements ----
+    # ---- Ã‰vÃ¨nements ----
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if transition_recommencer or transition_porte_enfer_start:
+            continue
 
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                if joueur.peut_bouger and joueur.double_saut and joueur.nb_sauts == 1 and not jump_key_held:
+                    jump_key_held = True
+                    joueur.vel_y = joueur.jump_force
+                    joueur.nb_sauts = 2
+                    sauter.play()
+                    joueur.timer_chute = pygame.time.get_ticks()
+                    joueur.chute_son_joue = False
+                    tombersfx.stop()
+                    tombersfx.set_volume(0)
+                    joueur.double_jump_effects.append({
+                        'x': joueur.rect.centerx,
+                        'y': joueur.rect.y + 150,
+                        'alpha': 255,
+                        'width': 120,
+                        'height': 7
+                    })
             if event.key == pygame.K_ESCAPE:
                 if afficher_parametres_pause:
-                    # Ferme les paramètres, retour au menu pause
+                    # Ferme les paramÃ¨tres, retour au menu pause
                     afficher_parametres_pause = False
                     pause_button_sfx.play()
                 else:
                     en_pause = not en_pause
-                    joueur.peut_bouger = not en_pause
+                    joueur.peut_bouger = not (en_pause or lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
                     if en_pause:
                         mettre_speedrun_en_pause(current_time)
                         joueur.mettre_en_pause(current_time)
-                        pygame.mixer.pause()
                         pause_ouvrir_sfx.play()
+                        pygame.mixer.pause()
                         pause_hover_index = pause_selected
                     else:
                         reprendre_speedrun_apres_pause(current_time)
@@ -420,7 +627,7 @@ while running:
                     action = boutons_pause[pause_selected]["action"]
                     if action == "reprendre":
                         en_pause = False
-                        joueur.peut_bouger = True
+                        joueur.peut_bouger = not (lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
                         reprendre_speedrun_apres_pause(current_time)
                         joueur.reprendre_apres_pause(current_time)
                         pygame.mixer.unpause()
@@ -434,10 +641,19 @@ while running:
                     elif action == "parametres":
                         afficher_parametres_pause = True
                         pause_button_sfx.play()
-            if en_pause:
-                continue
-            if inventaire_affiche and event.key != pygame.K_f:
-                continue
+                    elif action == "recommencer":
+                        transition_recommencer = True
+                        transition_start = current_time
+                        pause_button_sfx.play()
+        if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
+            jump_key_held = False
+        if event.type not in (pygame.KEYDOWN, pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN):
+            continue
+        if event.type == pygame.KEYDOWN and en_pause:
+            continue
+        if event.type == pygame.KEYDOWN and inventaire_affiche and event.key != pygame.K_f:
+            continue
+        if event.type == pygame.KEYDOWN:
             #---Giordano
             if event.key == pygame.K_e and dialogue_g:
                 if not done:
@@ -535,6 +751,9 @@ while running:
                 panneau_button_hidden = True
                 panneau_button_timer = current_time
                 stoplire.play()
+            elif event.key == pygame.K_e and active_porte:
+                transition_porte_enfer_start = current_time
+                joueur.peut_bouger = False
             elif event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1:
                 ouvrir_inv.play()
                 inventaire_affiche = True
@@ -551,7 +770,7 @@ while running:
         if event.type == pygame.MOUSEMOTION and en_pause and not afficher_parametres_pause:
             mx, my = event.pos
             for i, bouton in enumerate(boutons_pause):
-                y_bouton = 350 + i * 80
+                y_bouton = 280 + i * 80
                 x_bouton = screen_width // 2 - pause_button_width // 2
                 rect_bouton = pygame.Rect(x_bouton, y_bouton, pause_button_width, pause_button_height)
                 if rect_bouton.collidepoint(mx, my):
@@ -575,14 +794,14 @@ while running:
             elif en_pause:
                 mx, my = event.pos
                 for i, bouton in enumerate(boutons_pause):
-                    y_bouton = 350 + i * 80
+                    y_bouton = 280 + i * 80
                     x_bouton = screen_width // 2 - pause_button_width // 2
                     rect_bouton = pygame.Rect(x_bouton, y_bouton, pause_button_width, pause_button_height)
                     if rect_bouton.collidepoint(mx, my):
                         action = bouton["action"]
                         if action == "reprendre":
                             en_pause = False
-                            joueur.peut_bouger = True
+                            joueur.peut_bouger = not (lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
                             reprendre_speedrun_apres_pause(current_time)
                             joueur.reprendre_apres_pause(current_time)
                             pygame.mixer.unpause()
@@ -595,6 +814,10 @@ while running:
                             running = False
                         elif action == "parametres":
                             afficher_parametres_pause = True
+                            pause_button_sfx.play()
+                        elif action == "recommencer":
+                            transition_recommencer = True
+                            transition_start = current_time
                             pause_button_sfx.play()
             else:
                 if inventaire_affiche and bottes_dans_inventaire:
@@ -614,22 +837,40 @@ while running:
                             bottes_equipees = True
                         tooltip_bottes_visible = False
 
-    # ---- Touches maintenues ----
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-        joueur.is_animating = True
-        joueur.facing_left  = False
-        if speedrun and not speedrun_started:
-            speedrun_started = True
-            speedrun_start_time = current_time
-    elif keys[pygame.K_q] or keys[pygame.K_LEFT]:
-        joueur.is_animating = True
-        joueur.facing_left  = True
-        if speedrun and not speedrun_started:
-            speedrun_started = True
-            speedrun_start_time = current_time
+
+    # ---- Touches maintenues ----
+    if not transition_recommencer and not transition_porte_enfer_start:
+        if not joueur.peut_bouger:
+            joueur.is_animating = False
+            joueur.vx = 0
+        elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+            joueur.is_animating = True
+            joueur.facing_left  = False
+            if speedrun and not speedrun_started:
+                speedrun_started = True
+                speedrun_start_time = current_time
+        elif keys[pygame.K_q] or keys[pygame.K_LEFT]:
+            joueur.is_animating = True
+            joueur.facing_left  = True
+            if speedrun and not speedrun_started:
+                speedrun_started = True
+                speedrun_start_time = current_time
+        else:
+            joueur.is_animating = False
+
+    if joueur.peut_bouger and joueur.est_au_sol(plateformes + plateformes_prison + sol):
+        if keys[pygame.K_SPACE] and not ground_jump_consumed:
+            ground_jump_consumed = True
+            jump_key_held = True
+            joueur.vel_y = joueur.jump_force
+            joueur.nb_sauts = 1
+            sauter.play()
+        elif not keys[pygame.K_SPACE]:
+            ground_jump_consumed = False
+            jump_key_held = False
     else:
-        joueur.is_animating = False
+        ground_jump_consumed = False
 
     # ---- Timers ----
     if inventaire_affiche and not show_button_f_inventaire:
@@ -642,7 +883,7 @@ while running:
         panneau_button_hidden = False
 
     # ---- Physique ----
-    if not en_pause:
+    if not en_pause and not transition_recommencer and not transition_porte_enfer_start and etat != "mort":
         joueur.deplacement(plateformes + plateformes_prison + sol)
         joueur.appliquer_gravite(plateformes + plateformes_prison + sol, murs=plateformes_haute)
         joueur.update_double_jump_effects()
@@ -655,20 +896,34 @@ while running:
                     invincible = True
                     invincibilite_temps = current_time
                     if vies <= 0:
-                        etat = "game_over"
-                    break
+                        etat = "mort"
+                        death_animation_start = current_time
+                        death_sound_stage = 0
+                        joueur.peut_bouger = False
+                        joueur.is_animating = False
+                        couper_sons_pour_mort()
+                        break
 
         if invincible and current_time - invincibilite_temps > duree_invincibilite:
             invincible = False
 
         if joueur.rect.top > chute_y:
             vies = 0
-            etat = "game_over"
+            etat = "mort"
+            death_animation_start = current_time
+            death_sound_stage = 0
+            joueur.peut_bouger = False
+            joueur.is_animating = False
+            couper_sons_pour_mort()
 
     if speedrun and speedrun_started and not speedrun_finished:
         if joueur.rect.colliderect(speedrun_finish_rect):
             speedrun_finished = True
             speedrun_final_time = speedrun_elapsed
+
+    if etat == "mort" and death_animation_start is not None:
+        if current_time - death_animation_start >= DEATH_GAME_OVER_DELAY_MS:
+            etat = "game_over"
 
     if etat == "game_over":
         pygame.quit()
@@ -678,12 +933,109 @@ while running:
 
     # ---- Caméra ----
     camera_x = joueur.rect.centerx - screen_width // 2
-    camera_x = max(0, min(camera_x, niveau_largeur - screen_width))
+    camera_x = max(0, min(camera_x, 2000 - screen_width))
     camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
     camera_y = max(0, camera_y)
 
     bg_x = -camera_x * parallax_factor + bg_offset_x
     bg_y = -camera_y * parallax_factor + bg_offset_y
+
+    if etat == "mort":
+        death_elapsed = current_time - death_animation_start
+        heart_travel_end = DEATH_HEART_ON_PLAYER_MS + DEATH_HEART_TRAVEL_MS
+        heart_hold_end = heart_travel_end + DEATH_HEART_CENTER_HOLD_MS - DEATH_ANIMATION_SPEEDUP_MS
+        hand_grab_end = heart_hold_end + DEATH_HAND_GRAB_MS
+        satan_enter_start = hand_grab_end + DEATH_HAND_EXIT_MS
+        # Joue chaque son de la sequence de mort une seule fois.
+        if death_sound_stage == 0:
+            mortsfx.play()
+            death_sound_stage = 1
+        elif death_sound_stage == 1 and death_elapsed >= heart_travel_end:
+            coeursfx.play()
+            death_sound_stage = 2
+        screen.fill((0, 0, 0))
+        # Mort: coeur sur le joueur, trajet vers le centre, pause, puis main depuis la droite.
+
+        if death_elapsed < DEATH_HEART_ON_PLAYER_MS:
+            screen.blit(
+                coeurt_mort,
+                coeurt_mort.get_rect(center=(joueur.rect.centerx - camera_x, joueur.rect.centery - camera_y))
+            )
+        elif death_elapsed < heart_travel_end:
+            t = min((death_elapsed - DEATH_HEART_ON_PLAYER_MS) / DEATH_HEART_TRAVEL_MS, 1)
+            # Courbe douce avec une sortie lente, proche d'un ease-out type Bezier.
+            t = 1 - (1 - t) ** 3
+            screen.blit(
+                coeurt_mort,
+                coeurt_mort.get_rect(
+                    center=(
+                        (joueur.rect.centerx - camera_x) + ((screen_width // 2) - (joueur.rect.centerx - camera_x)) * t,
+                        (joueur.rect.centery - camera_y) + ((screen_height // 2) - (joueur.rect.centery - camera_y)) * t,
+                        )
+                )
+            )
+        elif death_elapsed < heart_hold_end:
+            screen.blit(
+                coeurt_mort,
+                coeurt_mort.get_rect(center=(screen_width // 2, screen_height // 2))
+            )
+
+        if death_elapsed >= DEATH_HAND_DELAY_MS:
+            # La main entre, change d'image, attend un peu, puis repart avec un depart doux.
+            if death_elapsed < heart_hold_end:
+
+                screen.blit(
+                    main1,
+                    main1.get_rect(
+                        center=(
+                            (screen_width + main1.get_width() // 2)
+                            + ((screen_width // 2) - (screen_width + main1.get_width() // 2)) * (1 - (1 - min((death_elapsed - DEATH_HAND_DELAY_MS) / DEATH_HAND_ENTER_MS, 1)) ** 3),
+                            screen_height // 2 - 50,
+                        )
+                    )
+                )
+            elif death_elapsed < hand_grab_end:
+                if death_sound_stage == 2:
+                    sfx.coeursfx.stop()
+                    sfx.coeurmort.set_volume(1.0)
+                    sfx.coeurmort.play()
+                    death_sound_stage = 3
+                screen.blit(
+                    main2,
+                    main2.get_rect(center=(screen_width // 2, screen_height // 2 - 50))
+                )
+            else:
+                screen.blit(
+                    main2,
+                    main2.get_rect(
+                        center=(
+                            (screen_width // 2)
+                            + ((screen_width + main2.get_width() // 2) - (screen_width // 2)) * min((death_elapsed - hand_grab_end) / DEATH_HAND_EXIT_MS, 1) ** 3,
+                            screen_height // 2 - 50,
+                        )
+                    )
+                )
+                if death_elapsed >= satan_enter_start:
+                    t = min((death_elapsed - satan_enter_start) / DEATH_SATAN_ENTER_MS, 1)
+                    t = 1 - (1 - t) ** 3
+                    img = satan1
+                    if death_elapsed >= satan_enter_start + DEATH_SATAN_ENTER_MS:
+                        if death_sound_stage == 3:
+                            sfx.satan.set_volume(1.0)
+                            sfx.satan.play()
+                            death_sound_stage = 4
+                        img = satan1 if ((death_elapsed - satan_enter_start - DEATH_SATAN_ENTER_MS) // 120) % 2 == 0 else satan2
+                    screen.blit(
+                        img,
+                        img.get_rect(
+                            center=(
+                                screen_width // 2,
+                                (-img.get_height() // 2) + (220 + img.get_height() // 2) * t - (15 if img == satan2 else 0),
+                            )
+                        )
+                    )
+        pygame.display.flip()
+        continue
 
     # ========================
     # RENDU
@@ -701,7 +1053,8 @@ while running:
     if invincible:
         afficher_joueur = (current_time // 100) % 2 == 0
     if afficher_joueur:
-        sprite_x = joueur.rect.centerx - camera_x - joueur.image.get_width() // 2 + joueur.draw_offset_x
+        sprite_offset_x = joueur.draw_offset_x_left if joueur.facing_left else joueur.draw_offset_x
+        sprite_x = joueur.rect.centerx - camera_x - joueur.image.get_width() // 2 + sprite_offset_x
         sprite_y = joueur.rect.bottom - camera_y - joueur.image.get_height() + joueur.draw_offset_y
         screen.blit(joueur.image, (sprite_x, sprite_y))
 
@@ -772,17 +1125,17 @@ while running:
         screen.blit(effect_surface, (effect['x'] - camera_x - effect['width'] // 2, effect['y'] - camera_y))
 
 
-    # HUD – Vies
+    # HUD â€“ Vies
     if not lire_pancarte:
         screen.blit(vie_text, (20, 20))
         for i in range(vies):
             screen.blit(coeur, (230 + i * 110, 5))
 
-    # HUD – Icône double saut
+    # HUD â€“ IcÃ´ne double saut
     if joueur.double_saut and not lire_pancarte:
         screen.blit(double_jump, (screen_width - 150, screen_height - 260))
 
-    # HUD – Icône inventaire
+    # HUD â€“ IcÃ´ne inventaire
     if not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1:
         screen.blit(icone_inventaire, (screen_width - 150, screen_height - 150))
         screen.blit(lettre_f, (screen_width - 107, screen_height - 175))
@@ -793,7 +1146,7 @@ while running:
     player_visual_rect = joueur.rect
     active = player_visual_rect.colliderect(giordano_rect)
 
-    # Giordano – bouton E + dialogue
+    # Giordano â€“ bouton E + dialogue
     if active and not dialogue_g:
         screen.blit(bouton_e, (bouton_e_rect.x - camera_x, bouton_e_rect.y - camera_y + button_offset))
     if dialogue_g:
@@ -811,7 +1164,7 @@ while running:
             done = True
             screen.blit(bouton_e, (1000, 600 + button_offset))
 
-    # Virgilio – bouton E + dialogue
+    # Virgilio â€“ bouton E + dialogue
     active2 = player_visual_rect.colliderect(virgilio_rect)
     if active2 and not dialogue_v:
         screen.blit(bouton_e, ((bouton_e_rect.x - 900) - camera_x, (bouton_e_rect.y - 2110) - camera_y + button_offset))
@@ -830,7 +1183,7 @@ while running:
             done = True
             screen.blit(bouton_e, (1020, 550 + button_offset))
 
-    # Condamné1 – bouton E + dialogue
+    # Condamné1 â€“ bouton E + dialogue
     active3 = player_visual_rect.colliderect(condamne1_rect)
     if active3 and not dialogue_c1:
         screen.blit(bouton_e, (
@@ -855,7 +1208,8 @@ while running:
     # Titre "L'Enfer"
     if not en_pause and titre_index < speed * len(titre):
         titre_index += 1
-        dialogue_sfx.play()
+        if titre_index % speed == 0:
+            dialogue_sfx.play()
     elif not en_pause and titre_index >= speed * len(titre) and titre_fin == 0:
         dialogue_sfx.stop()
         titre_fin = pygame.time.get_ticks()
@@ -885,6 +1239,7 @@ while running:
             screen.blit(bouton_f, (850, 600 + button_offset))
         if objet_dans_inventaire:
             screen.blit(frame_inventaire, (400, 250))
+
         if bottes_dans_inventaire:
             screen.blit(bottes, (400, 250))
             if bottes_equipees:
@@ -893,7 +1248,7 @@ while running:
                 tooltip_rect = pygame.Rect(490, 250, 130, 40)
                 pygame.draw.rect(screen, (40, 40, 40), tooltip_rect)
                 pygame.draw.rect(screen, (200, 200, 200), tooltip_rect, 2)
-                texte_tooltip = "Déséquiper" if bottes_equipees else "Équiper"
+                texte_tooltip = "Déséquiper" if bottes_equipees else "Ã‰quiper"
                 label = police.render(texte_tooltip, True, (255, 255, 255))
                 screen.blit(label, (497, 260))
         if not objet_dans_inventaire:
@@ -908,7 +1263,7 @@ while running:
         screen.blit(titre_logo, titre_rect)
 
         for i, bouton in enumerate(boutons_pause):
-            y_bouton = 350 + i * 80
+            y_bouton = 280 + i * 80
             x_bouton = screen_width // 2 - pause_button_width // 2
             rect_bouton = pygame.Rect(x_bouton, y_bouton, pause_button_width, pause_button_height)
             couleur_texte = "#f5c542" if i == pause_selected else "white"
@@ -920,12 +1275,13 @@ while running:
                 fleche = police_bouton.render(">", True, "#f5c542")
                 screen.blit(fleche, (rect_bouton.x - 35, rect_bouton.centery - fleche.get_height() // 2))
 
-    # Menu paramètres (par-dessus la pause)
+    # Menu paramÃ¨tres (par-dessus la pause)
     if en_pause and afficher_parametres_pause:
         screen.blit(parametre_gui_pause, parametre_gui_rect_p)
         screen.blit(fermer_pause, fermer_pause_rect)
         screen.blit(police_param_pause.render("musique",  True, (255, 255, 255)), (270, 170))
-        screen.blit(police_param_pause.render("speedrun", True, (255, 255, 255)), (270, 270))
+        screen.blit(police_param_pause.render("speedrun (recommencer pour prendre effet)", True, (255, 255, 255)), (270, 270))
+        screen.blit(police_param_pause.render("sfx", True, (255, 255, 255)), (270, 370))        
         for parametre in parametres_toggles_pause:
             img = activer_p if parametre["enabled"] else desactiver_p
             screen.blit(img, parametre["rect"])
@@ -959,17 +1315,51 @@ while running:
             fini_surf = police.render("TERMINE !", True, (255, 215, 0))
             screen.blit(fini_surf, (screen_width - fini_surf.get_width() - 20, 50))
     # Porte enfer - affiche e si on collide
-    active_porte = joueur.rect.colliderect(porte_rect)
     if active_porte:
-        if active_porte:
-            screen.blit(
-                bouton_e,
-                (
-                    porte_rect.x - camera_x + porte_rect.width // 2 + 250,
-                    porte_rect.y - camera_y + button_offset + 350
-                )
+        screen.blit(
+            bouton_e,
+            (
+                porte_rect.x - camera_x + porte_rect.width // 2 + 250,
+                porte_rect.y - camera_y + button_offset + 350
             )
+        )
+    if transition_recommencer:
+        temps_transition = current_time - transition_start
+        if temps_transition <= transition_duree_fondu:
+            alpha = int((temps_transition / transition_duree_fondu) * 255)
+        else:
+            alpha = 255
+            if temps_transition >= transition_duree_fondu + transition_pause_noire:
+                transition_recommencer = False
+                reset()
+        fondu = pygame.Surface((screen_width, screen_height))
+        fondu.fill((0, 0, 0))
+        fondu.set_alpha(alpha)
+        screen.blit(fondu, (0, 0))
+        titre_centre_img = titre_logo.copy()
+        titre_centre_img.set_alpha(alpha)
+        titre_centre = titre_centre_img.get_rect(center=(screen_width // 2, screen_height // 2))
+        screen.blit(titre_centre_img, titre_centre)
+    if transition_porte_enfer_start:
+        temps_transition_porte = current_time - transition_porte_enfer_start
+        if temps_transition_porte < 500:
+            alpha = int((temps_transition_porte / 500) * 255)
+        elif temps_transition_porte < 4500:
+            alpha = 255
+        elif temps_transition_porte < 5000:
+            alpha = int((1 - ((temps_transition_porte - 4500) / 500)) * 255)
+        else:
+            transition_porte_enfer_start = 0
+            joueur.peut_bouger = not (en_pause or lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
+            alpha = 0
 
+        if alpha > 0:
+            fondu = pygame.Surface((screen_width, screen_height))
+            fondu.fill((0, 0, 0))
+            fondu.set_alpha(alpha)
+            screen.blit(fondu, (0, 0))
     pygame.display.flip()
 
 pygame.quit()
+
+
