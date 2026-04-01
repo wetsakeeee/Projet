@@ -1,15 +1,14 @@
 import pygame, sys
 from sfx import sfxmarche1, sfxmarche2, sfxmarche3, sauter, tombersfx
-import random
+import random, settings
 
 pygame.mixer.init(44100)
 
-sound = sauter
-sound.set_volume(0.2)
+sauter.set_volume(0.2 if settings.option_3 else 0)
 
 marche_sons = [sfxmarche1, sfxmarche2, sfxmarche3]
 for s in marche_sons:
-    s.set_volume(0.5)
+    s.set_volume(1 if settings.option_3 else 0)
 
 tombersfx.set_volume(0)
 
@@ -23,6 +22,7 @@ class Joueur(pygame.sprite.Sprite):
         self.rect = pygame.Rect(0, 0, 50, 100)
         self.rect.center = (100, 6299)
         self.draw_offset_x = 8
+        self.draw_offset_x_left = -8
         self.draw_offset_y = 15
         # vvvv Enlever le commentaire pour le mettre en haut vvvv
         #self.rect = pygame.Rect(1900, 3000, 50, 100)
@@ -58,7 +58,6 @@ class Joueur(pygame.sprite.Sprite):
         self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur012botte.png").convert_alpha(),(150,150)))
 
         self.current_sprite = 0
-        self.sprite_offset = ((150 - 32) // 2, (150 - 32) // 2)
         self.is_animating = False
 
         # Mouvement
@@ -70,12 +69,12 @@ class Joueur(pygame.sprite.Sprite):
         self.jump_force = -15
         self.facing_left = False
         self.peut_bouger = True
+        self.au_sol = False
 
         # Double saut
-        self.double_saut = False
+        self.double_saut =  True
         self.nb_sauts = 0
         self.dernier_saut = 0
-        self.delai_double_saut = 200  # ms
         self.double_jump_effects = []
 
         # Sons de marche
@@ -143,61 +142,29 @@ class Joueur(pygame.sprite.Sprite):
                 if self.vx > 0:
                     self.rect.right = plat.left
                     self.vx = 0
+                    self.is_animating = False  # stop animation si mur à droite
                 elif self.vx < 0:
                     self.rect.left = plat.right
                     self.vx = 0
+                    self.is_animating = False  # stop animation si mur à gauche
 
         temps_actuel = pygame.time.get_ticks()
-
         # Sons de marche
         if (touches[pygame.K_q] or touches[pygame.K_LEFT] or
                 touches[pygame.K_d] or touches[pygame.K_RIGHT]):
-            if self.est_au_sol(plateformes):
+            if self.est_au_sol(plateformes) and self.is_animating:
                 if temps_actuel - self.marche_timer >= self.marche_intervalle:
                     random.choice(marche_sons).play()
                     self.marche_timer = temps_actuel
 
-        # Saut normal
-        if touches[pygame.K_SPACE] and self.est_au_sol(plateformes):
-            self.vel_y = self.jump_force
-            self.nb_sauts = 1
-            self.dernier_saut = temps_actuel
-            sound.play()
-
-        # Double saut
-        elif (
-            touches[pygame.K_SPACE]
-            and not self.est_au_sol(plateformes)
-            and self.double_saut
-            and self.nb_sauts == 1
-            and temps_actuel - self.dernier_saut >= self.delai_double_saut
-        ):
-            self.vel_y = self.jump_force
-            self.nb_sauts = 2
-            self.dernier_saut = temps_actuel
-            sound.play()
-            # Reset du timer de chute
-            self.timer_chute = temps_actuel
-            self.chute_son_joue = False
-            tombersfx.stop()
-            tombersfx.set_volume(0)
-            self.double_jump_effects.append({
-                'x': self.rect.centerx,
-                'y': self.rect.y + 150,
-                'alpha': 255,
-                'width': 120,
-                'height': 7
-            })
-
     # ------------------------------------------------------------------
     def est_au_sol(self, plateformes):
-        # Crée un rect fin juste sous les pieds du joueur
-        pied = pygame.Rect(self.rect.x + 5, self.rect.bottom, self.rect.width - 10, 2)
-        return any(pied.colliderect(p) for p in plateformes)
+        return self.au_sol
 
     # ------------------------------------------------------------------
     def appliquer_gravite(self, plateformes, murs=None):
         sprites = self.get_sprites()
+        self.au_sol = False
 
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
@@ -209,6 +176,7 @@ class Joueur(pygame.sprite.Sprite):
                     self.rect.bottom = plat.top
                     self.vel_y = 0
                     self.nb_sauts = 0
+                    self.au_sol = True
                 elif self.vel_y < 0:
                     self.rect.top = plat.bottom
                     self.vel_y = 0
@@ -240,7 +208,7 @@ class Joueur(pygame.sprite.Sprite):
 
             if self.chute_son_joue:
                 progression = min((temps_en_air - 500) / 2000, 1.0)
-                tombersfx.set_volume(progression * 0.5)
+                tombersfx.set_volume((progression * 0.5) if settings.option_3 else 0)
 
         else:
             if self.en_chute:
@@ -288,4 +256,8 @@ class Joueur(pygame.sprite.Sprite):
         # Décale les timers pour éviter des glitches audio/animation
         duree_pause = temps_actuel - getattr(self, '_pause_marche_timer', temps_actuel)
         self.marche_timer = temps_actuel - duree_pause
-        self.timer_chute = temps_actuel - (temps_actuel - getattr(self, '_pause_timer_chute', temps_actuel))
+        self.timer_chute = getattr(self, '_pause_timer_chute', temps_actuel)
+        tombersfx.stop()
+        tombersfx.set_volume(0)
+        self.en_chute = False
+        self.chute_son_joue = False
