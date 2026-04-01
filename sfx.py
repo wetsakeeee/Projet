@@ -28,3 +28,8 @@ viesfx = pygame.mixer.Sound("asset/sons/gain_de_vie.mp3")
 pausesfxouvrir = pygame.mixer.Sound("asset/sons/pause_ouvrir.wav")
 pausesfxfermer = pygame.mixer.Sound("asset/sons/pause_fermer.wav")
 pausesfxbutton = pygame.mixer.Sound("asset/sons/pause_button.wav")
+# Animation de mort
+coeursfx = pygame.mixer.Sound("asset/sons/coeur.mp3")
+coeurmort = pygame.mixer.Sound("asset/sons/coeur_mort.mp3")
+mortsfx = pygame.mixer.Sound("asset/sons/mort.mp3")
+satan = pygame.mixer.Sound("asset/sons/satan.mp3")
