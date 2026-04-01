@@ -1,6 +1,7 @@
 import pygame, sys, subprocess, time
 from pathlib import Path
 from pygame.display import flip
+import sfx
 from sfx import musiquemenu, sfxboutton
 import settings
 
@@ -21,11 +22,17 @@ BG = pygame.transform.scale(BG, (1280, 720))
 pygame.display.set_caption("Galileo 2D")
 # Couleurs
 Blanc = (255, 255, 255)
-bleu_transparent = (0, 80, 200, 180)
-bleu_selection = (0, 140, 255, 220)
+texte_bouton = (248, 236, 214)
+brun_ombre = (24, 10, 8)
+rouge_braise = (82, 16, 16, 210)
+rouge_selection = (150, 45, 28, 235)
+contour_bouton = (182, 122, 72)
+contour_selection = (244, 197, 90)
 shadow = (0, 0, 0)
 # Parametres
-parametre_gui = pygame.image.load("images/parametre.png").convert_alpha()
+parametre_gui = pygame.transform.scale(
+    pygame.image.load("images/parametre.png").convert_alpha(), (width, height)
+)
 parametre_gui_rect = parametre_gui.get_rect(center=(width // 2, height // 2))
 fermer = pygame.transform.scale(
     pygame.image.load("images/fermer_fenetre.png").convert_alpha(), (50, 50)
@@ -35,25 +42,13 @@ fermer_rect = fermer.get_rect(topleft=(1200, 30))
 activer = pygame.transform.scale(
     pygame.image.load("images/activer.png").convert_alpha(), (150, 75)
 )
-activer2 = pygame.transform.scale(
-    pygame.image.load("images/activer.png").convert_alpha(), (150, 75)
-)
-activer3 = pygame.transform.scale(
-    pygame.image.load("images/activer.png").convert_alpha(), (150, 75)
-)
 desactiver = pygame.transform.scale(
-    pygame.image.load("images/desactiver.png").convert_alpha(), (150, 75)
-)
-desactiver2 = pygame.transform.scale(
-    pygame.image.load("images/desactiver.png").convert_alpha(), (150, 75)
-)
-desactiver3 = pygame.transform.scale(
     pygame.image.load("images/desactiver.png").convert_alpha(), (150, 75)
 )
 
 toggle_rect_1 = desactiver.get_rect(topleft=(100, 150))
-toggle_rect_2 = desactiver2.get_rect(topleft=(100, 250))
-toggle_rect_3 = desactiver3.get_rect(topleft=(100, 350))
+toggle_rect_2 = desactiver.get_rect(topleft=(100, 250))
+toggle_rect_3 = desactiver.get_rect(topleft=(100, 350))
 SETTINGS_PATH = Path(__file__).with_name("settings.py")
 
 # Polices d'ecritures
@@ -64,7 +59,10 @@ except:
     Police_titre = pygame.font.SysFont(None, 72)
     Police_bouton = pygame.font.SysFont(None, 36)
 
-Police_parametre = pygame.font.Font("asset/polices/Coolvetica Rg.otf", 34)
+try:
+    Police_parametre = pygame.font.Font("asset/polices/ari-w9500-bold.ttf", 34)
+except:
+    Police_parametre = pygame.font.SysFont(None, 34)
 
 
 def sauvegarder_settings():
@@ -87,14 +85,26 @@ class Button:
 
     def draw(self, win, mouse_pos):
         is_hover = self.rect.collidepoint(mouse_pos)
-        color = bleu_selection if is_hover else bleu_transparent
         button_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        color = rouge_selection if is_hover else rouge_braise
         pygame.draw.rect(
             button_surface, color, (0, 0, self.width, self.height), border_radius=16
         )
+        border_color = contour_selection if is_hover else contour_bouton
+        pygame.draw.rect(
+            button_surface,
+            border_color,
+            (0, 0, self.width, self.height),
+            width=3,
+            border_radius=16,
+        )
         win.blit(button_surface, self.rect)
 
-        text_surf = Police_bouton.render(self.text, True, Blanc)
+        ombre_surf = Police_bouton.render(self.text, True, brun_ombre)
+        ombre_rect = ombre_surf.get_rect(center=(self.rect.centerx + 2, self.rect.centery + 2))
+        win.blit(ombre_surf, ombre_rect)
+
+        text_surf = Police_bouton.render(self.text, True, texte_bouton)
         text_rect = text_surf.get_rect(center=self.rect.center)
         win.blit(text_surf, text_rect)
 
@@ -126,6 +136,30 @@ else:
     musique_menu.set_volume(0)
 
 
+def appliquer_volume_sfx(enabled):
+    volume_sfx = 1.0 if enabled else 0
+    son_bouton.set_volume(volume_sfx)
+    sfx.sauter.set_volume(0.2 if enabled else 0)
+    sfx.degat.set_volume(volume_sfx)
+    sfx.sfxdialogue.set_volume(0.5 if enabled else 0)
+    sfx.fin.set_volume(0.5 if enabled else 0)
+    sfx.sfxnpc.set_volume(0.1 if enabled else 0)
+    sfx.hacker.set_volume(volume_sfx)
+    sfx.liresfx.set_volume(0.5 if enabled else 0)
+    sfx.stoplire.set_volume(0.5 if enabled else 0)
+    sfx.dialogue_csfx.set_volume(volume_sfx)
+    sfx.sfxmarche1.set_volume(0.5 if enabled else 0)
+    sfx.sfxmarche2.set_volume(0.5 if enabled else 0)
+    sfx.sfxmarche3.set_volume(0.5 if enabled else 0)
+    sfx.ouvrir_inv.set_volume(volume_sfx)
+    sfx.fermer_inv.set_volume(volume_sfx)
+    sfx.selectsfx.set_volume(volume_sfx)
+    sfx.tombersfx.set_volume(0.3 if enabled else 0)
+    sfx.viesfx.set_volume(volume_sfx)
+    sfx.pausesfxouvrir.set_volume(volume_sfx)
+    sfx.pausesfxfermer.set_volume(volume_sfx)
+    sfx.pausesfxbutton.set_volume(volume_sfx)
+
 def appliquer_parametre(param_name, enabled):
     if param_name == "musique":
         settings.musique = enabled
@@ -139,9 +173,9 @@ def appliquer_parametre(param_name, enabled):
         settings.speedrun = enabled
     elif param_name == "option_3":
         settings.option_3 = enabled
+        appliquer_volume_sfx(enabled)
 
     sauvegarder_settings()
-
 
 parametres_toggles = [
     {
@@ -155,17 +189,18 @@ parametres_toggles = [
         "name": "speedrun",
         "enabled": settings.speedrun,
         "rect": toggle_rect_2,
-        "image_on": activer2,
-        "image_off": desactiver2,
+        "image_on": activer,
+        "image_off": desactiver,
     },
     {
         "name": "option_3",
         "enabled": settings.option_3,
         "rect": toggle_rect_3,
-        "image_on": activer3,
-        "image_off": desactiver3,
+        "image_on": activer,
+        "image_off": desactiver,
     },
 ]
+appliquer_volume_sfx(settings.option_3)
 
 running = True
 clock = pygame.time.Clock()
@@ -259,9 +294,11 @@ while running:
         screen.blit(parametre_gui, parametre_gui_rect)
         screen.blit(fermer, fermer_rect)
         texte_musique = Police_parametre.render("musique", True, Blanc)
-        texte_speedrun = Police_parametre.render("speedrun", True, Blanc)
+        texte_speedrun = Police_parametre.render("speedrun (recommencer pour prendre effet)", True, Blanc)
+        texte_sfx = Police_parametre.render("sfx", True, Blanc)
         screen.blit(texte_musique, (270, 170))
         screen.blit(texte_speedrun, (270, 270))
+        screen.blit(texte_sfx, (270, 370))
         for parametre in parametres_toggles:
             image = parametre["image_on"] if parametre["enabled"] else parametre["image_off"]
             screen.blit(image, parametre["rect"])
