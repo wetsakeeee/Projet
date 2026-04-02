@@ -2,8 +2,9 @@ import pygame
 import subprocess
 import math
 from joueur import Joueur
-from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2
-import sfx, random, sys
+from monstre import Monstre
+from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2, mur2
+import sfx, sys
 from sfx import sauter, sfxmarche1, sfxmarche2, sfxmarche3, tombersfx
 import settings
 from pathlib import Path
@@ -46,9 +47,6 @@ titre_logo = pygame.image.load("images/titre.png").convert_alpha()
 titre_rect = titre_logo.get_rect(midtop=(screen_width // 2, 100))
 
 vies = 3
-# NIVEAU 1 ET 2
-niveau1 = pygame.Rect(0,0,2000,4000)
-niveau2 = pygame.Rect(2000,0,2000,4000)
 
 # --- SPEEDRUN TIMER ---
 speedrun = settings.speedrun
@@ -191,11 +189,8 @@ liresfx.set_volume(0.5)
 
 # --- INVENTAIRE ---
 frame_inventaire           = pygame.transform.scale(pygame.image.load("images/frame_inventaire.png").convert_alpha(), (80, 80))
-objet_dans_inventaire      = False
 bottes                     = pygame.transform.scale(pygame.image.load("images/botte.png").convert_alpha(), (80, 80))
-bottes_dans_inventaire     = False
-potion_vie_dans_inventaire = False
-potion_vie                 = pygame.transform.scale(pygame.image.load("images/potion_vie.png").convert_alpha(), (100, 100))
+potion_vie                 = pygame.transform.scale(pygame.image.load("images/potion_vie.png").convert_alpha(), (80, 80))
 icone_inventaire           = pygame.transform.scale(pygame.image.load("images/icone_inventaire.png").convert_alpha(), (100, 100))
 inventaire_img             = pygame.transform.scale(pygame.image.load("images/inventaire.png").convert_alpha(), (560, 630))
 inventaire_affiche         = False
@@ -211,8 +206,65 @@ inventaire_vide_text       = police.render("Vous n'avez rien dans", True, "#7a37
 inventaire_vide_text2      = police.render("votre inventaire !", True, "#7a371b")
 lettre_f                   = police.render("F", True, "#ffffff")
 # Ã‰quipement bottes
-bottes_equipees        = False
-tooltip_bottes_visible = False
+bottes_equipees             = False
+inventaire                  = []
+inventaire_index_selectionne = None
+tooltip_inventaire_visible  = False
+INVENTAIRE_SLOT_DEPART      = (400, 250)
+INVENTAIRE_SLOT_TAILLE      = 80
+INVENTAIRE_SLOT_COLONNES    = 2
+INVENTAIRE_SLOT_ECART_X     = 110
+INVENTAIRE_SLOT_ECART_Y     = 110
+ITEMS_INVENTAIRE = {
+    "bottes": {
+        "image": bottes,
+        "nom": "Bottes",
+        "utilisable": True,
+        "action_label": lambda: "Desequiper" if bottes_equipees else "Equiper",
+    },
+    "potion_vie": {
+        "image": potion_vie,
+        "nom": "Potion de vie",
+        "utilisable": False,
+        "action_label": lambda: "",
+    },
+}
+
+def get_slot_inventaire_rect(index):
+    col = index % INVENTAIRE_SLOT_COLONNES
+    row = index // INVENTAIRE_SLOT_COLONNES
+    x = INVENTAIRE_SLOT_DEPART[0] + col * INVENTAIRE_SLOT_ECART_X
+    y = INVENTAIRE_SLOT_DEPART[1] + row * INVENTAIRE_SLOT_ECART_Y
+    return pygame.Rect(x, y, INVENTAIRE_SLOT_TAILLE, INVENTAIRE_SLOT_TAILLE)
+
+def trouver_index_inventaire(item_id):
+    for index, item in enumerate(inventaire):
+        if item["id"] == item_id:
+            return index
+    return None
+
+def inventaire_contient(item_id):
+    return trouver_index_inventaire(item_id) is not None
+
+def ajouter_objet_inventaire(item_id):
+    if inventaire_contient(item_id):
+        return
+    if item_id not in ITEMS_INVENTAIRE:
+        return
+    inventaire.append({"id": item_id})
+
+def retirer_objet_inventaire(item_id):
+    global inventaire_index_selectionne, tooltip_inventaire_visible
+    index = trouver_index_inventaire(item_id)
+    if index is None:
+        return
+    del inventaire[index]
+    if inventaire_index_selectionne is not None:
+        if inventaire_index_selectionne == index:
+            inventaire_index_selectionne = None
+            tooltip_inventaire_visible = False
+        elif inventaire_index_selectionne > index:
+            inventaire_index_selectionne -= 1
 
 # Bruit/sfx dialogue de npc
 npcsfx = sfx.sfxnpc
@@ -296,7 +348,7 @@ message3 = message_c1[active_message_c1]
 
 # MURS
 plateformes_haute = get_plateformeshaute()
-
+mur2 = mur2()
 # Music
 pygame.mixer.init(44100)
 ambient = sfx.musiquefond
@@ -331,7 +383,7 @@ plateformes_prison = get_plateforme_prison()
 plateformes_niveau = get_plateformes()
 plateformes        = plateformes_niveau
 sol                = get_sol()
-niveau_largeur     = 4000
+niveau_largeur     = 5000
 sol2 = get_sol2()
 
 try:
@@ -364,6 +416,12 @@ sol2_images = []
 for s in sol2:
     img = pygame.transform.scale(sol2_image_orig, (s.width, s.height))
     sol2_images.append(img)
+
+mur2_image_orig = pygame.image.load("images/mur_niveau2.png").convert_alpha()
+mur2_images = []
+for s in mur2:
+    img = pygame.transform.scale(mur2_image_orig, (s.width, s.height))
+    mur2_images.append(img)
 
 # Plateformes de danger
 plateformes_danger  = plateforme_pic()
@@ -399,6 +457,9 @@ background      = pygame.transform.smoothscale(background_orig, (bg_width, bg_he
 bg_offset_x     = -200
 bg_offset_y     = -300
 parallax_factor = 0.5
+
+# Monstre
+monstre = Monstre(1700, 3280)
 
 # Ajustement initial du joueur
 for plat in plateformes:
@@ -458,7 +519,7 @@ def reset():
     global counter, done
     global giordano_cooldown, virgilio_cooldown
     global giordano_dialogue_cooldown, virgilio_dialogue_cooldown, condamne1_dialogue_cooldown
-    global objet_dans_inventaire, bottes_dans_inventaire, bottes_equipees, tooltip_bottes_visible
+    global bottes_equipees, inventaire, inventaire_index_selectionne, tooltip_inventaire_visible
     global inventaire_affiche, lire_pancarte, pancarte_active, panneau_button_hidden
     global titre_index, titre_fin
     global en_pause, afficher_parametres_pause
@@ -506,10 +567,10 @@ def reset():
     virgilio_dialogue_cooldown = -3000
     condamne1_dialogue_cooldown = -3000
 
-    objet_dans_inventaire = False
-    bottes_dans_inventaire = False
     bottes_equipees = False
-    tooltip_bottes_visible = False
+    inventaire = []
+    inventaire_index_selectionne = None
+    tooltip_inventaire_visible = False
     inventaire_affiche = False
     lire_pancarte = False
     pancarte_active = False
@@ -713,8 +774,7 @@ while running:
                         counter = 0
                         joueur.peut_bouger = True
                         virgilio_dialogue_cooldown = current_time
-                        objet_dans_inventaire = True
-                        bottes_dans_inventaire = True
+                        ajouter_objet_inventaire("bottes")
                         if current_time - virgilio_cooldown > duree_cooldown:
                             virgilio_cooldown = current_time
                             ajouter_vie()
@@ -777,7 +837,8 @@ while running:
                 fermer_inv.play()
                 inventaire_affiche = False
                 show_button_f_inventaire = False
-                tooltip_bottes_visible = False
+                tooltip_inventaire_visible = False
+                inventaire_index_selectionne = None
                 joueur.peut_bouger = True
 
         if event.type == pygame.MOUSEMOTION and en_pause and not afficher_parametres_pause:
@@ -833,22 +894,29 @@ while running:
                             transition_start = current_time
                             pause_button_sfx.play()
             else:
-                if inventaire_affiche and bottes_dans_inventaire:
-                    bottes_rect_inv = pygame.Rect(400, 250, 80, 80)
-                    if bottes_rect_inv.collidepoint(event.pos):
-                        select.play()
-                        tooltip_bottes_visible = not tooltip_bottes_visible
-                if inventaire_affiche and tooltip_bottes_visible:
-                    tooltip_equiper_rect = pygame.Rect(490, 250, 130, 40)
-                    if tooltip_equiper_rect.collidepoint(event.pos):
-                        select.play()
-                        if bottes_equipees:
-                            joueur.double_saut = False
-                            bottes_equipees = False
-                        else:
-                            joueur.double_saut = True
-                            bottes_equipees = True
-                        tooltip_bottes_visible = False
+                if inventaire_affiche:
+                    for index, item in enumerate(inventaire):
+                        slot_rect = get_slot_inventaire_rect(index)
+                        if slot_rect.collidepoint(event.pos):
+                            select.play()
+                            inventaire_index_selectionne = index
+                            tooltip_inventaire_visible = ITEMS_INVENTAIRE[item["id"]]["utilisable"]
+                            break
+
+                    if tooltip_inventaire_visible and inventaire_index_selectionne is not None:
+                        slot_rect = get_slot_inventaire_rect(inventaire_index_selectionne)
+                        tooltip_equiper_rect = pygame.Rect(slot_rect.right + 10, slot_rect.y, 130, 40)
+                        if tooltip_equiper_rect.collidepoint(event.pos):
+                            select.play()
+                            item_id = inventaire[inventaire_index_selectionne]["id"]
+                            if item_id == "bottes":
+                                if bottes_equipees:
+                                    joueur.double_saut = False
+                                    bottes_equipees = False
+                                else:
+                                    joueur.double_saut = True
+                                    bottes_equipees = True
+                            tooltip_inventaire_visible = False
 
     keys = pygame.key.get_pressed()
 
@@ -917,6 +985,26 @@ while running:
                         couper_sons_pour_mort()
                         break
 
+        # Monstre (logique déplacée dans monstre.py)
+        vies, invincible, invincibilite_temps, mort = monstre.update_and_collide(
+            joueur,
+            plateformes + plateformes_prison + sol + sol2 + plateformes_haute,
+            vies,
+            invincible,
+            current_time,
+            invincibilite_temps,
+            duree_invincibilite,
+        )
+        if mort:
+            sfx.degat.play()
+        if vies <= 0 and etat != "mort":
+            etat = "mort"
+            death_animation_start = current_time
+            death_sound_stage = 0
+            joueur.peut_bouger = False
+            joueur.is_animating = False
+            couper_sons_pour_mort()
+
         if invincible and current_time - invincibilite_temps > duree_invincibilite:
             invincible = False
 
@@ -949,7 +1037,7 @@ while running:
     if joueur.rect.centerx < 2000:
         camera_x = max(0, min(camera_x, 2000 - screen_width))
     else:
-        camera_x = max(2000, min(camera_x, 4000 - screen_width))
+        camera_x = max(2000, min(camera_x, 4100 - screen_width))
     camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
     camera_y = max(0, camera_y)
 
@@ -1067,6 +1155,10 @@ while running:
     screen.blit(condamne1, (condamne1_rect.x - camera_x, condamne1_rect.y - camera_y))
 
 
+    # Monstre
+    monstre.draw(screen, camera_x, camera_y)
+
+
     # Joueur
     afficher_joueur = True
     if invincible:
@@ -1098,6 +1190,9 @@ while running:
             debug_surface.fill((255, 0, 0, 100))
             screen.blit(debug_surface, (plat.x - camera_x, plat.y - camera_y))
 
+    # Sol2
+    for s, img in zip(sol2, sol2_images):
+        screen.blit(img, (s.x - camera_x, s.y - camera_y))
     # Sol
     for s, img in zip(sol, sol_images):
         screen.blit(img, (s.x - camera_x, s.y - camera_y - 15))
@@ -1106,8 +1201,8 @@ while running:
             debug_surface = pygame.Surface((s.width, s.height), pygame.SRCALPHA)
             debug_surface.fill((255, 128, 0, 100))
             screen.blit(debug_surface, (s.x - camera_x, s.y - camera_y))
-    # Sol2
-    for s, img in zip(sol2, sol2_images):
+    # Mur2
+    for s, img in zip(mur2, mur2_images):
         screen.blit(img, (s.x - camera_x, s.y - camera_y))
 
     # Pics sol
@@ -1259,10 +1354,29 @@ while running:
         screen.blit(inventaire_img, (inv_x, inv_y))
         if show_button_f_inventaire:
             screen.blit(bouton_f, (850, 600 + button_offset))
-        if objet_dans_inventaire:
-            screen.blit(frame_inventaire, (400, 250))
+        for index, item in enumerate(inventaire):
+            slot_rect = get_slot_inventaire_rect(index)
+            item_data = ITEMS_INVENTAIRE[item["id"]]
+            screen.blit(frame_inventaire, slot_rect.topleft)
+            screen.blit(item_data["image"], slot_rect.topleft)
+            if item["id"] == "bottes" and bottes_equipees:
+                pygame.draw.rect(screen, (255, 215, 0), slot_rect, 3)
+            elif inventaire_index_selectionne == index:
+                pygame.draw.rect(screen, (255, 255, 255), slot_rect, 2)
 
-        if bottes_dans_inventaire:
+        if tooltip_inventaire_visible and inventaire_index_selectionne is not None and inventaire_index_selectionne < len(inventaire):
+            item = inventaire[inventaire_index_selectionne]
+            item_data = ITEMS_INVENTAIRE[item["id"]]
+            action_label = item_data["action_label"]()
+            if action_label:
+                slot_rect = get_slot_inventaire_rect(inventaire_index_selectionne)
+                tooltip_rect = pygame.Rect(slot_rect.right + 10, slot_rect.y, 130, 40)
+                pygame.draw.rect(screen, (40, 40, 40), tooltip_rect)
+                pygame.draw.rect(screen, (200, 200, 200), tooltip_rect, 2)
+                label = police.render(action_label, True, (255, 255, 255))
+                screen.blit(label, (tooltip_rect.x + 7, tooltip_rect.y + 10))
+
+        if False and bottes_dans_inventaire:
             screen.blit(bottes, (400, 250))
             if bottes_equipees:
                 pygame.draw.rect(screen, (255, 215, 0), (400, 250, 80, 80), 3)
@@ -1273,7 +1387,7 @@ while running:
                 texte_tooltip = "Déséquiper" if bottes_equipees else "Ã‰quiper"
                 label = police.render(texte_tooltip, True, (255, 255, 255))
                 screen.blit(label, (497, 260))
-        if not objet_dans_inventaire:
+        if not inventaire:
             screen.blit(inventaire_vide_text, (500, 380))
             screen.blit(inventaire_vide_text2, (530, 400))
 
@@ -1388,5 +1502,3 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
-
-
