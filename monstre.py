@@ -1,20 +1,44 @@
+import math
 import pygame
 
+
 class Monstre(pygame.sprite.Sprite):
-    def __init__(self, x = 1700, y = 3280):
+    def __init__(self, x=1700, y=3280):
         super().__init__()
-        
+
         self.frames = []
-        self.frames.append(pygame.transform.scale(pygame.image.load("images/frame_monstre/monstre1.png").convert_alpha(),(250,250)))
-        self.frames.append(pygame.transform.scale(pygame.image.load("images/frame_monstre/monstre2.png").convert_alpha(),(250,250)))
-        self.frames.append(pygame.transform.scale(pygame.image.load("images/frame_monstre/monstre3.png").convert_alpha(),(250,250)))
-        self.frames.append(pygame.transform.scale(pygame.image.load("images/frame_monstre/monstre4.png").convert_alpha(),(250,250)))
+        self.frames.append(
+            pygame.transform.scale(
+                pygame.image.load("images/frame_monstre/monstre1.png").convert_alpha(),
+                (250, 250),
+            )
+        )
+        self.frames.append(
+            pygame.transform.scale(
+                pygame.image.load("images/frame_monstre/monstre2.png").convert_alpha(),
+                (250, 250),
+            )
+        )
+        self.frames.append(
+            pygame.transform.scale(
+                pygame.image.load("images/frame_monstre/monstre3.png").convert_alpha(),
+                (250, 250),
+            )
+        )
+        self.frames.append(
+            pygame.transform.scale(
+                pygame.image.load("images/frame_monstre/monstre4.png").convert_alpha(),
+                (250, 250),
+            )
+        )
 
         self.image = self.frames[0]
         self.rect = pygame.Rect(x, y, 100, 250)
         self.vitesse = 4
         self.vel_y = 0
         self.gravity = 0.5
+        self.distance_activation = 800
+        self.distance_perte_agro = 1000
 
         self.actif = False
         self.vivant = True
@@ -26,13 +50,17 @@ class Monstre(pygame.sprite.Sprite):
         if not self.vivant:
             return
 
+        distance_x = joueur_rect.centerx - self.rect.centerx
+        distance_y = joueur_rect.centery - self.rect.centery
+        distance = math.hypot(distance_x, distance_y)
+
         if not self.actif:
-            distance = abs(joueur_rect.centerx - self.rect.centerx)
-            if distance < 800:  # le joueur est à moins de 800px du monstre
+            if distance < self.distance_activation:
                 self.actif = True
+        elif distance > self.distance_perte_agro:
+            self.actif = False
 
         if self.actif:
-        # Déplacement vers le joueur
             if joueur_rect.centerx < self.rect.centerx:
                 self.rect.x -= self.vitesse
                 self.facing_left = True
@@ -40,15 +68,25 @@ class Monstre(pygame.sprite.Sprite):
                 self.rect.x += self.vitesse
                 self.facing_left = False
 
-        # Gravité 
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
+
         for plat in plateformes:
             if self.rect.colliderect(plat):
                 if self.vel_y >= 0:
                     self.rect.bottom = plat.top
                     self.vel_y = 0
-        # Animation
+                elif self.vel_y < 0:
+                    self.rect.top = plat.bottom
+                    self.vel_y = 0
+
+        for plat in plateformes:
+            if self.rect.colliderect(plat):
+                if self.facing_left:
+                    self.rect.left = plat.right
+                else:
+                    self.rect.right = plat.left
+
         now = pygame.time.get_ticks()
         if now - self.anim_timer > 150:
             self.anim_timer = now
@@ -60,24 +98,49 @@ class Monstre(pygame.sprite.Sprite):
         else:
             self.image = img
 
-    def verifier_collision_joueur(self, joueur_rect, vies, invincible, current_time, invincibilite_temps, duree_invincibilite):
-        """Retourne (vies, invincible, invincibilite_temps, mort_monstre)"""
+    def verifier_collision_joueur(
+        self,
+        joueur_rect,
+        vies,
+        invincible,
+        current_time,
+        invincibilite_temps,
+        duree_invincibilite,
+    ):
         if not self.vivant or not self.actif:
             return vies, invincible, invincibilite_temps, False
 
         if self.rect.colliderect(joueur_rect):
-            # Le joueur saute sur le monstre (vient d'en haut)
             if joueur_rect.bottom <= self.rect.centery and joueur_rect.bottom >= self.rect.top - 15:
                 self.vivant = False
-                return vies, invincible, invincibilite_temps, True  # monstre tué
+                return vies, invincible, invincibilite_temps, True
 
-            # Contact latéral → dégâts si pas invincible
             if not invincible:
                 vies -= 1
                 invincible = True
                 invincibilite_temps = current_time
 
         return vies, invincible, invincibilite_temps, False
+
+    def update_and_collide(
+        self,
+        joueur,
+        plateformes,
+        vies,
+        invincible,
+        current_time,
+        invincibilite_temps,
+        duree_invincibilite,
+    ):
+        self.update(joueur.rect, plateformes)
+        return self.verifier_collision_joueur(
+            joueur.rect,
+            vies,
+            invincible,
+            current_time,
+            invincibilite_temps,
+            duree_invincibilite,
+        )
 
     def draw(self, screen, camera_x, camera_y):
         if self.vivant:
