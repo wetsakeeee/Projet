@@ -96,3 +96,11 @@ def get_plateformeshaute():
         pygame.Rect(1960,1020,40,2800),
         pygame.Rect(1535,860,40,2800)
     ]
+def get_sol2():
+    return [
+        pygame.Rect(1680, 6500, 2420, 135)
+    ]
+def mur2():
+    return [
+        pygame.Rect(3484, 5497, 616, 1004)
+    ]
