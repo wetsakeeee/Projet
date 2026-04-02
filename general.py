@@ -2,7 +2,7 @@ import pygame
 import subprocess
 import math
 from joueur import Joueur
-from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute
+from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2
 import sfx, random, sys
 from sfx import sauter, sfxmarche1, sfxmarche2, sfxmarche3, tombersfx
 import settings
@@ -45,7 +45,11 @@ DEATH_GAME_OVER_DELAY_MS = (
 titre_logo = pygame.image.load("images/titre.png").convert_alpha()
 titre_rect = titre_logo.get_rect(midtop=(screen_width // 2, 100))
 
-vies = 1
+vies = 3
+# NIVEAU 1 ET 2
+niveau1 = pygame.Rect(0,0,2000,4000)
+niveau2 = pygame.Rect(2000,0,2000,4000)
+
 # --- SPEEDRUN TIMER ---
 speedrun = settings.speedrun
 speedrun_started = False
@@ -61,7 +65,7 @@ def ajouter_vie():
     global vies
     if vies < 3:
         vies += 1
-        sfx.sfxvie.play()
+        sfx.viesfx.play()
 # Porte de l'enfer
 porte = pygame.image.load("images/porte_enfer.png").convert_alpha()
 porte = pygame.transform.scale(porte, (380, 530)) 
@@ -139,7 +143,7 @@ def appliquer_parametre_jeu(param_name, enabled):
     sauvegarder_settings()
 
 chute_y = 7000
-zoom_factor = 1.5
+zoom_factor = 3
 camera_y_offset = -100
 
 coeur       = pygame.transform.scale(pygame.image.load("images/coeur.png").convert_alpha(), (100, 100))
@@ -213,7 +217,7 @@ tooltip_bottes_visible = False
 # Bruit/sfx dialogue de npc
 npcsfx = sfx.sfxnpc
 npcsfx.set_volume(0.1)
-# NPC 1 â€“ Giordano (animation 3 frames)
+# NPC 1  Giordano (animation 3 frames)
 giordano  = pygame.transform.scale(pygame.image.load("images/giordano.png").convert_alpha(),  (160, 105))
 giordano2 = pygame.transform.scale(pygame.image.load("images/giordano2.png").convert_alpha(), (160, 105))
 giordano3 = pygame.transform.scale(pygame.image.load("images/giordano3.png").convert_alpha(), (160, 105))
@@ -260,7 +264,7 @@ virgilio_dialogue_cooldown = -3000
 condamne1_dialogue_cooldown = -3000
 duree_dialogue_cooldown = 3000
 
-# NPC 2 â€“ Virgilio
+# NPC 2  Virgilio
 virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (60, 120))
 virgilio_rect = virgilio.get_rect()
 virgilio_rect.topleft = (700, 4080)
@@ -327,7 +331,8 @@ plateformes_prison = get_plateforme_prison()
 plateformes_niveau = get_plateformes()
 plateformes        = plateformes_niveau
 sol                = get_sol()
-niveau_largeur     = 5000
+niveau_largeur     = 4000
+sol2 = get_sol2()
 
 try:
     platform_image_orig  = pygame.image.load("images/plateforme_moyenne.png").convert_alpha()
@@ -353,6 +358,12 @@ sol_images = []
 for s in sol:
     img = pygame.transform.scale(sol_image_orig, (s.width, s.height))
     sol_images.append(img)
+
+sol2_image_orig = pygame.image.load("images/sol_niveau2.png").convert_alpha()
+sol2_images = []
+for s in sol2:
+    img = pygame.transform.scale(sol2_image_orig, (s.width, s.height))
+    sol2_images.append(img)
 
 # Plateformes de danger
 plateformes_danger  = plateforme_pic()
@@ -402,6 +413,7 @@ transition_start = 0
 transition_duree_fondu = 500   # ms pour devenir noir
 transition_pause_noire = 2000   # ms d'attente écran noir avant reset
 transition_porte_enfer_start = 0
+transition_porte_teleporte = False
 # Pause
 en_pause = False
 police_pause  = pygame.font.Font("asset/polices/Dungeon Depths.otf", 80)
@@ -450,6 +462,7 @@ def reset():
     global inventaire_affiche, lire_pancarte, pancarte_active, panneau_button_hidden
     global titre_index, titre_fin
     global en_pause, afficher_parametres_pause
+    global transition_porte_teleporte
     tombersfx.stop()
     sfx.mortsfx.stop()
     sfx.coeursfx.stop()
@@ -884,8 +897,8 @@ while running:
 
     # ---- Physique ----
     if not en_pause and not transition_recommencer and not transition_porte_enfer_start and etat != "mort":
-        joueur.deplacement(plateformes + plateformes_prison + sol)
-        joueur.appliquer_gravite(plateformes + plateformes_prison + sol, murs=plateformes_haute)
+        joueur.deplacement(plateformes + plateformes_prison + sol + sol2)
+        joueur.appliquer_gravite(plateformes + plateformes_prison + sol + sol2, murs=plateformes_haute)
         joueur.update_double_jump_effects()
 
         if not invincible:
@@ -933,11 +946,17 @@ while running:
 
     # ---- Caméra ----
     camera_x = joueur.rect.centerx - screen_width // 2
-    camera_x = max(0, min(camera_x, 2000 - screen_width))
+    if joueur.rect.centerx < 2000:
+        camera_x = max(0, min(camera_x, 2000 - screen_width))
+    else:
+        camera_x = max(2000, min(camera_x, 4000 - screen_width))
     camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
     camera_y = max(0, camera_y)
 
-    bg_x = -camera_x * parallax_factor + bg_offset_x
+    if joueur.rect.centerx >= 2000:
+        bg_x = -(camera_x - 2000) * parallax_factor + bg_offset_x - bg_width // 2
+    else:
+        bg_x = -camera_x * parallax_factor + bg_offset_x
     bg_y = -camera_y * parallax_factor + bg_offset_y
 
     if etat == "mort":
@@ -1087,6 +1106,9 @@ while running:
             debug_surface = pygame.Surface((s.width, s.height), pygame.SRCALPHA)
             debug_surface.fill((255, 128, 0, 100))
             screen.blit(debug_surface, (s.x - camera_x, s.y - camera_y))
+    # Sol2
+    for s, img in zip(sol2, sol2_images):
+        screen.blit(img, (s.x - camera_x, s.y - camera_y))
 
     # Pics sol
     for plat, img in zip(plateformes_danger, pic_sol_images):
@@ -1125,17 +1147,17 @@ while running:
         screen.blit(effect_surface, (effect['x'] - camera_x - effect['width'] // 2, effect['y'] - camera_y))
 
 
-    # HUD â€“ Vies
+    # HUD  Vies
     if not lire_pancarte:
         screen.blit(vie_text, (20, 20))
         for i in range(vies):
             screen.blit(coeur, (230 + i * 110, 5))
 
-    # HUD â€“ IcÃ´ne double saut
+    # HUD  Icône double saut
     if joueur.double_saut and not lire_pancarte:
         screen.blit(double_jump, (screen_width - 150, screen_height - 260))
 
-    # HUD â€“ IcÃ´ne inventaire
+    # HUD  Icône inventaire
     if not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1:
         screen.blit(icone_inventaire, (screen_width - 150, screen_height - 150))
         screen.blit(lettre_f, (screen_width - 107, screen_height - 175))
@@ -1146,7 +1168,7 @@ while running:
     player_visual_rect = joueur.rect
     active = player_visual_rect.colliderect(giordano_rect)
 
-    # Giordano â€“ bouton E + dialogue
+    # Giordano  bouton E + dialogue
     if active and not dialogue_g:
         screen.blit(bouton_e, (bouton_e_rect.x - camera_x, bouton_e_rect.y - camera_y + button_offset))
     if dialogue_g:
@@ -1164,7 +1186,7 @@ while running:
             done = True
             screen.blit(bouton_e, (1000, 600 + button_offset))
 
-    # Virgilio â€“ bouton E + dialogue
+    # Virgilio  bouton E + dialogue
     active2 = player_visual_rect.colliderect(virgilio_rect)
     if active2 and not dialogue_v:
         screen.blit(bouton_e, ((bouton_e_rect.x - 900) - camera_x, (bouton_e_rect.y - 2110) - camera_y + button_offset))
@@ -1183,7 +1205,7 @@ while running:
             done = True
             screen.blit(bouton_e, (1020, 550 + button_offset))
 
-    # Condamné1 â€“ bouton E + dialogue
+    # Condamné1  bouton E + dialogue
     active3 = player_visual_rect.colliderect(condamne1_rect)
     if active3 and not dialogue_c1:
         screen.blit(bouton_e, (
@@ -1346,6 +1368,11 @@ while running:
             alpha = int((temps_transition_porte / 500) * 255)
         elif temps_transition_porte < 4500:
             alpha = 255
+            if not transition_porte_teleporte:
+                joueur.rect.center = (2100,6400) # coordonnée de destination, où il se teleporte
+                joueur.vel_y = 0
+                joueur.vx = 0
+            transition_porte_teleporte = True
         elif temps_transition_porte < 5000:
             alpha = int((1 - ((temps_transition_porte - 4500) / 500)) * 255)
         else:
