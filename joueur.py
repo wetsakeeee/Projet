@@ -31,7 +31,7 @@ class Joueur(pygame.sprite.Sprite):
         #vvv Enlever le commentaire pour le mettre à côté de la porte enfer
         #self.rect = pygame.Rect(285, 840, 50, 100)
         #vvv Enlever le commentaire pour le mettre à côté de la porte enfer
-        self.rect = pygame.Rect(2200, 6399, 50, 100)
+        #self.rect = pygame.Rect(2200, 6399, 50, 100)
 
         # Frame joueur normal
         self.sprites_normal = []
