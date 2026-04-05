@@ -40,6 +40,14 @@ def get_plateformes():
         pygame.Rect(285, 840, 1270,200),
         pygame.Rect(1910,980,100,40),
         pygame.Rect(-5, 1300, 500,40),
+        pygame.Rect(3000, 6350, 110,40),
+        pygame.Rect(3100, 6000, 400,80),
+        pygame.Rect(2850, 6200, 110,40),
+        pygame.Rect(3100, 5500, 400,80),
+        pygame.Rect(2850, 5850, 110,40),
+        pygame.Rect(2600, 5600, 110,40),
+
+
 
         
         #------------Bordure-----------
