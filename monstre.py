@@ -60,13 +60,22 @@ class Monstre(pygame.sprite.Sprite):
         elif distance > self.distance_perte_agro:
             self.actif = False
 
+        deplacement_x = 0
         if self.actif:
             if joueur_rect.centerx < self.rect.centerx:
-                self.rect.x -= self.vitesse
+                deplacement_x = -self.vitesse
                 self.facing_left = True
             else:
-                self.rect.x += self.vitesse
+                deplacement_x = self.vitesse
                 self.facing_left = False
+
+        self.rect.x += deplacement_x
+        for plat in plateformes:
+            if self.rect.colliderect(plat):
+                if deplacement_x > 0:
+                    self.rect.right = plat.left
+                elif deplacement_x < 0:
+                    self.rect.left = plat.right
 
         self.vel_y += self.gravity
         self.rect.y += self.vel_y
@@ -79,13 +88,6 @@ class Monstre(pygame.sprite.Sprite):
                 elif self.vel_y < 0:
                     self.rect.top = plat.bottom
                     self.vel_y = 0
-
-        for plat in plateformes:
-            if self.rect.colliderect(plat):
-                if self.facing_left:
-                    self.rect.left = plat.right
-                else:
-                    self.rect.right = plat.left
 
         now = pygame.time.get_ticks()
         if now - self.anim_timer > 150:
