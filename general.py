@@ -187,10 +187,17 @@ stoplire               = sfx.stoplire
 stoplire.set_volume(0.5)
 liresfx.set_volume(0.5)
 
+# Toute interaction active
+active = False
+active2 = False
+active3 = False
+active_porte = False
+
 # --- INVENTAIRE ---
 frame_inventaire           = pygame.transform.scale(pygame.image.load("images/frame_inventaire.png").convert_alpha(), (80, 80))
 bottes                     = pygame.transform.scale(pygame.image.load("images/botte.png").convert_alpha(), (80, 80))
 potion_vie                 = pygame.transform.scale(pygame.image.load("images/potion_vie.png").convert_alpha(), (80, 80))
+epee                       = pygame.transform.scale(pygame.image.load("images/couteau.png").convert_alpha(), (80, 80))
 icone_inventaire           = pygame.transform.scale(pygame.image.load("images/icone_inventaire.png").convert_alpha(), (100, 100))
 inventaire_img             = pygame.transform.scale(pygame.image.load("images/inventaire.png").convert_alpha(), (560, 630))
 inventaire_affiche         = False
@@ -205,8 +212,9 @@ pause_button_sfx = sfx.pausesfxbutton
 inventaire_vide_text       = police.render("Vous n'avez rien dans", True, "#7a371b")
 inventaire_vide_text2      = police.render("votre inventaire !", True, "#7a371b")
 lettre_f                   = police.render("F", True, "#ffffff")
-# Ã‰quipement bottes
+# Équipement bottes
 bottes_equipees             = False
+epee_equipee                = False
 inventaire                  = []
 inventaire_index_selectionne = None
 tooltip_inventaire_visible  = False
@@ -226,7 +234,13 @@ ITEMS_INVENTAIRE = {
         "image": potion_vie,
         "nom": "Potion de vie",
         "utilisable": False,
-        "action_label": lambda: "",
+        "action_label": lambda: "Utiliser" if vies < 3 else None,
+    },
+    "epee": {
+        "image": epee,
+        "nom": "Epee",
+        "utilisable": True,
+        "action_label": lambda: "Desequiper" if epee_equipee else "Equiper",
     },
 }
 
@@ -248,10 +262,11 @@ def inventaire_contient(item_id):
 
 def ajouter_objet_inventaire(item_id):
     if inventaire_contient(item_id):
-        return
+        return False
     if item_id not in ITEMS_INVENTAIRE:
-        return
+        return False
     inventaire.append({"id": item_id})
+    return True
 
 def retirer_objet_inventaire(item_id):
     global inventaire_index_selectionne, tooltip_inventaire_visible
@@ -265,6 +280,7 @@ def retirer_objet_inventaire(item_id):
             tooltip_inventaire_visible = False
         elif inventaire_index_selectionne > index:
             inventaire_index_selectionne -= 1
+
 
 # Bruit/sfx dialogue de npc
 npcsfx = sfx.sfxnpc
@@ -459,7 +475,7 @@ bg_offset_y     = -300
 parallax_factor = 0.5
 
 # Monstre
-monstre = Monstre(1700, 3280)
+monstre = Monstre(1500, 3280)
 
 # Ajustement initial du joueur
 for plat in plateformes:
@@ -519,7 +535,7 @@ def reset():
     global counter, done
     global giordano_cooldown, virgilio_cooldown
     global giordano_dialogue_cooldown, virgilio_dialogue_cooldown, condamne1_dialogue_cooldown
-    global bottes_equipees, inventaire, inventaire_index_selectionne, tooltip_inventaire_visible
+    global bottes_equipees, epee_equipee, inventaire, inventaire_index_selectionne, tooltip_inventaire_visible
     global inventaire_affiche, lire_pancarte, pancarte_active, panneau_button_hidden
     global titre_index, titre_fin
     global en_pause, afficher_parametres_pause
@@ -568,6 +584,7 @@ def reset():
     condamne1_dialogue_cooldown = -3000
 
     bottes_equipees = False
+    epee_equipee = False
     inventaire = []
     inventaire_index_selectionne = None
     tooltip_inventaire_visible = False
@@ -606,7 +623,12 @@ while running:
     clock.tick(60)
     current_time  = pygame.time.get_ticks()
     button_offset = int(math.sin(current_time * 0.01) * 3)
+    player_visual_rect = joueur.rect
     active_porte = joueur.rect.colliderect(porte_rect)
+    active = player_visual_rect.colliderect(giordano_rect)
+    active2 = player_visual_rect.colliderect(virgilio_rect)
+    active3 = player_visual_rect.colliderect(condamne1_rect)
+    pancarte_active = joueur.rect.colliderect(panneau_rect) and not panneau_button_hidden
 
     # Animation de Giordano
     if not giordano_pause:
@@ -639,7 +661,7 @@ while running:
                 giordano_anim_timer = current_time
             giordano_pause = False
 
-    # ---- Ã‰vÃ¨nements ----
+    # ---- ÉvÃ¨nements ----
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -774,10 +796,12 @@ while running:
                         counter = 0
                         joueur.peut_bouger = True
                         virgilio_dialogue_cooldown = current_time
-                        ajouter_objet_inventaire("bottes")
-                        if current_time - virgilio_cooldown > duree_cooldown:
+                        if ajouter_objet_inventaire("bottes"):
+                            sfx.objetsfx.play()
+                        if current_time - virgilio_cooldown > duree_cooldown and vies < 3:
                             virgilio_cooldown = current_time
                             ajouter_vie()
+                        
             elif event.key == pygame.K_e and active2 and not dialogue_v:
                 if current_time - virgilio_dialogue_cooldown > duree_dialogue_cooldown:
                     dialogue_v = True
@@ -802,6 +826,8 @@ while running:
                         active_message_c1 = 0
                         counter = 0
                         joueur.peut_bouger = True
+                        if ajouter_objet_inventaire("epee"):
+                            sfx.objetsfx.play()
                         condamne1_dialogue_cooldown = current_time
             elif event.key == pygame.K_e and active3 and not dialogue_c1:
                 if current_time - condamne1_dialogue_cooldown > duree_dialogue_cooldown:
@@ -916,7 +942,11 @@ while running:
                                 else:
                                     joueur.double_saut = True
                                     bottes_equipees = True
+                            elif item_id == "epee":
+                                epee_equipee = not epee_equipee
                             tooltip_inventaire_visible = False
+
+    # Si un objet a été ajouter dans l'inventaire, jouer objetsfx
 
     keys = pygame.key.get_pressed()
 
@@ -965,8 +995,8 @@ while running:
 
     # ---- Physique ----
     if not en_pause and not transition_recommencer and not transition_porte_enfer_start and etat != "mort":
-        joueur.deplacement(plateformes + plateformes_prison + sol + sol2)
-        joueur.appliquer_gravite(plateformes + plateformes_prison + sol + sol2, murs=plateformes_haute)
+        joueur.deplacement(plateformes + plateformes_prison + sol + sol2 + mur2)
+        joueur.appliquer_gravite(plateformes + plateformes_prison + sol + sol2 + mur2, murs=plateformes_haute)
         joueur.update_double_jump_effects()
 
         if not invincible:
@@ -1226,7 +1256,6 @@ while running:
                           plat_haute.width, plat_haute.height))
 
     # Panneau
-    pancarte_active = joueur.rect.colliderect(panneau_rect) and not panneau_button_hidden
     if pancarte_active:
         screen.blit(bouton_e, (bouton_e_rect.x - camera_x - 700, bouton_e_rect.y - camera_y + button_offset))
 
@@ -1260,9 +1289,6 @@ while running:
     joueur.update()
 
     # Zone de détection joueur pour les NPC
-    player_visual_rect = joueur.rect
-    active = player_visual_rect.colliderect(giordano_rect)
-
     # Giordano  bouton E + dialogue
     if active and not dialogue_g:
         screen.blit(bouton_e, (bouton_e_rect.x - camera_x, bouton_e_rect.y - camera_y + button_offset))
@@ -1282,7 +1308,6 @@ while running:
             screen.blit(bouton_e, (1000, 600 + button_offset))
 
     # Virgilio  bouton E + dialogue
-    active2 = player_visual_rect.colliderect(virgilio_rect)
     if active2 and not dialogue_v:
         screen.blit(bouton_e, ((bouton_e_rect.x - 900) - camera_x, (bouton_e_rect.y - 2110) - camera_y + button_offset))
     if dialogue_v:
@@ -1301,7 +1326,6 @@ while running:
             screen.blit(bouton_e, (1020, 550 + button_offset))
 
     # Condamné1  bouton E + dialogue
-    active3 = player_visual_rect.colliderect(condamne1_rect)
     if active3 and not dialogue_c1:
         screen.blit(bouton_e, (
             (280) - camera_x,
@@ -1361,6 +1385,8 @@ while running:
             screen.blit(item_data["image"], slot_rect.topleft)
             if item["id"] == "bottes" and bottes_equipees:
                 pygame.draw.rect(screen, (255, 215, 0), slot_rect, 3)
+            elif item["id"] == "epee" and epee_equipee:
+                pygame.draw.rect(screen, (255, 215, 0), slot_rect, 3)
             elif inventaire_index_selectionne == index:
                 pygame.draw.rect(screen, (255, 255, 255), slot_rect, 2)
 
@@ -1384,7 +1410,7 @@ while running:
                 tooltip_rect = pygame.Rect(490, 250, 130, 40)
                 pygame.draw.rect(screen, (40, 40, 40), tooltip_rect)
                 pygame.draw.rect(screen, (200, 200, 200), tooltip_rect, 2)
-                texte_tooltip = "Déséquiper" if bottes_equipees else "Ã‰quiper"
+                texte_tooltip = "Déséquiper" if bottes_equipees else "Équiper"
                 label = police.render(texte_tooltip, True, (255, 255, 255))
                 screen.blit(label, (497, 260))
         if not inventaire:
