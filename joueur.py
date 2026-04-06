@@ -31,7 +31,7 @@ class Joueur(pygame.sprite.Sprite):
         #vvv Enlever le commentaire pour le mettre à côté de la porte enfer
         #self.rect = pygame.Rect(285, 840, 50, 100)
         #vvv Enlever le commentaire pour le mettre à côté de la porte enfer
-        #self.rect = pygame.Rect(2200, 6400, 50, 100)
+        self.rect = pygame.Rect(2200, 6400, 50, 100)
 
         # Frame joueur normal
         self.sprites_normal = []
@@ -74,7 +74,7 @@ class Joueur(pygame.sprite.Sprite):
         self.au_sol = False
 
         # Double saut
-        self.double_saut =  False
+        self.double_saut =  True
         self.nb_sauts = 0
         self.dernier_saut = 0
         self.double_jump_effects = []
