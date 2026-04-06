@@ -40,12 +40,7 @@ def get_plateformes():
         pygame.Rect(285, 840, 1270,200),
         pygame.Rect(1910,980,100,40),
         pygame.Rect(-5, 1300, 500,40),
-        pygame.Rect(3000, 6350, 110,40),
-        pygame.Rect(3100, 6000, 400,80),
-        pygame.Rect(2850, 6200, 110,40),
-        pygame.Rect(3100, 5500, 400,80),
-        pygame.Rect(2850, 5850, 110,40),
-        pygame.Rect(2600, 5600, 110,40),
+
 
 
 
@@ -106,9 +101,17 @@ def get_plateformeshaute():
     ]
 def get_sol2():
     return [
-        pygame.Rect(1680, 6500, 2420, 135)
+        pygame.Rect(1680, 6500, 2420, 400)
     ]
 def mur2():
     return [
         pygame.Rect(3484, 5497, 616, 1004)
+    ]
+def plateforme_2():
+    return [
+        pygame.Rect(3000, 6350, 110,40),
+        pygame.Rect(3100, 6000, 400,160),
+        pygame.Rect(2750, 6180, 110,40),
+        pygame.Rect(3100, 5497, 400,160),
+        pygame.Rect(2800, 5850, 110,40),
     ]
