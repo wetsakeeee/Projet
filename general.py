@@ -3,7 +3,7 @@ import subprocess
 import math
 from joueur import Joueur
 from monstre import Monstre
-from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2, mur2
+from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2, mur2, plateforme_2
 import sfx, sys
 from sfx import sauter, sfxmarche1, sfxmarche2, sfxmarche3, tombersfx
 import settings
@@ -65,7 +65,7 @@ def ajouter_vie():
         vies += 1
         sfx.viesfx.play()
 # Porte de l'enfer
-porte = pygame.image.load("images/porte_enfer.png").convert_alpha()
+porte = pygame.image.load("images/Divers/porte_enfer.png").convert_alpha()
 porte = pygame.transform.scale(porte, (380, 530)) 
 porte_rect = porte.get_rect(topleft=(300, 320))
 
@@ -84,9 +84,9 @@ def reprendre_speedrun_apres_pause(temps_actuel):
 def couper_sons_pour_mort():
     # Coupe tous les sons du jeu pour laisser uniquement ceux de la sequence de mort.
     for son in (
-        ambient, sfx.degat, sfx.viesfx, sfx.sfxdialogue, sfx.fin, sfx.liresfx, sfx.stoplire,
+        ambient, sfx.degat, sfx.viesfx, sfx.sfxtitre, sfx.fin, sfx.liresfx, sfx.stoplire,
         sfx.ouvrir_inv, sfx.fermer_inv, sfx.selectsfx, sfx.pausesfxouvrir, sfx.pausesfxfermer,
-        sfx.pausesfxbutton, sfx.sfxnpc, sfx.dialogue_csfx, sfxmarche1, sfxmarche2, sfxmarche3,
+        sfx.pausesfxbutton, sfx.sfxnpc, sfx.dialogue_csfx, sfx.carontesfx, sfxmarche1, sfxmarche2, sfxmarche3,
         sauter, tombersfx
     ):
         son.stop()
@@ -115,7 +115,7 @@ def appliquer_parametre_jeu(param_name, enabled):
         settings.option_3 = enabled
         vol = 0 if not enabled else 1.0
         sfx.viesfx.set_volume(vol)
-        sfx.sfxdialogue.set_volume(0.5 if enabled else 0)
+        sfx.sfxtitre.set_volume(0.5 if enabled else 0)
         sfx.fin.set_volume(0.5 if enabled else 0)
         sfx.liresfx.set_volume(0.5 if enabled else 0)
         sfx.stoplire.set_volume(0.5 if enabled else 0)
@@ -127,6 +127,7 @@ def appliquer_parametre_jeu(param_name, enabled):
         sfx.pausesfxbutton.set_volume(vol)
         sfx.sfxnpc.set_volume(0.1 if enabled else 0)
         sfx.dialogue_csfx.set_volume(vol)
+        sfx.carontesfx.set_volume(vol)
         sfx.degat.set_volume(vol)
         sfx.mortsfx.set_volume(vol)
         sfx.satan.set_volume(vol)
@@ -144,9 +145,9 @@ chute_y = 7000
 zoom_factor = 3
 camera_y_offset = -100
 
-coeur       = pygame.transform.scale(pygame.image.load("images/coeur.png").convert_alpha(), (100, 100))
-vie_text    = pygame.transform.scale(pygame.image.load("images/vie.png").convert_alpha(), (186, 72))
-double_jump = pygame.transform.scale(pygame.image.load("images/icone_double_jump.png").convert_alpha(), (100, 100))
+coeur       = pygame.transform.scale(pygame.image.load("images/GUI/coeur.png").convert_alpha(), (100, 100))
+vie_text    = pygame.transform.scale(pygame.image.load("images/GUI/vie.png").convert_alpha(), (186, 72))
+double_jump = pygame.transform.scale(pygame.image.load("images/GUI/icone_double_jump.png").convert_alpha(), (100, 100))
 
 police       = pygame.font.Font("asset/polices/ari-w9500-bold.ttf", 24)
 police_titre = pygame.font.Font("asset/polices/Dungeon Depths.otf", 50)
@@ -157,28 +158,31 @@ if len(sys.argv) == 3:
 else:
     joueur = Joueur()
 
-# SystÃ¨me d'invincibilité
+# Système d'invincibilité
 invincible          = False
 invincibilite_temps = 0
 duree_invincibilite = 2000
 
 # TITRE DEBUT DE JEU
-dialogue_sfx = sfx.sfxdialogue
-dialogue_sfx.set_volume(0.5)
+titre_sfx = sfx.sfxtitre
+titre_sfx.set_volume(0.5)
 titre       = "L'Enfer"
 titre_index = 0
 titre_fin   = 0
 
+# Curseur custom
+curseur_img = pygame.transform.scale(pygame.image.load("images/GUI/curseur.png").convert_alpha(), (30, 30))
+pygame.mouse.set_visible(False)
 
 # Pancarte
-panneau = pygame.image.load("images/panneau.png").convert_alpha()
+panneau = pygame.image.load("images/Divers/panneau.png").convert_alpha()
 panneau = pygame.transform.scale(panneau, (96, 150))
 panneau_rect = panneau.get_rect()
 panneau_rect.topleft = (800, 6150)
 pancarte_active        = False
 panneau_button_hidden  = False
 panneau_button_timer   = 0
-pancarte = pygame.transform.scale(pygame.image.load("images/pancarte.png").convert_alpha(), (850, 500))
+pancarte = pygame.transform.scale(pygame.image.load("images/GUI/Pancartes/pancarte1.png").convert_alpha(), (850, 500))
 lire_pancarte          = False
 pancarte_timer         = 0
 show_button_e_pancarte = False
@@ -188,18 +192,20 @@ stoplire.set_volume(0.5)
 liresfx.set_volume(0.5)
 
 # Toute interaction active
+# 1 pour Giordano, 2 pour Virgilio, 3 pour Condamné, 4 pour Caronte, porte pour la porte
 active = False
 active2 = False
 active3 = False
+active4 = False
 active_porte = False
 
 # --- INVENTAIRE ---
-frame_inventaire           = pygame.transform.scale(pygame.image.load("images/frame_inventaire.png").convert_alpha(), (80, 80))
-bottes                     = pygame.transform.scale(pygame.image.load("images/botte.png").convert_alpha(), (80, 80))
-potion_vie                 = pygame.transform.scale(pygame.image.load("images/potion_vie.png").convert_alpha(), (80, 80))
-epee                       = pygame.transform.scale(pygame.image.load("images/couteau.png").convert_alpha(), (80, 80))
-icone_inventaire           = pygame.transform.scale(pygame.image.load("images/icone_inventaire.png").convert_alpha(), (100, 100))
-inventaire_img             = pygame.transform.scale(pygame.image.load("images/inventaire.png").convert_alpha(), (560, 630))
+frame_inventaire           = pygame.transform.scale(pygame.image.load("images/GUI/Inventaire/frame_inventaire.png").convert_alpha(), (80, 80))
+bottes                     = pygame.transform.scale(pygame.image.load("images/Objets/botte.png").convert_alpha(), (80, 80))
+potion_vie                 = pygame.transform.scale(pygame.image.load("images/Objets/potion_vie.png").convert_alpha(), (80, 80))
+epee                       = pygame.transform.scale(pygame.image.load("images/Objets/couteau.png").convert_alpha(), (80, 80))
+icone_inventaire           = pygame.transform.scale(pygame.image.load("images/GUI/icone_inventaire.png").convert_alpha(), (100, 100))
+inventaire_img             = pygame.transform.scale(pygame.image.load("images/GUI/Inventaire/inventaire.png").convert_alpha(), (560, 630))
 inventaire_affiche         = False
 inventaire_timer           = 0
 show_button_f_inventaire   = False
@@ -281,15 +287,37 @@ def retirer_objet_inventaire(item_id):
         elif inventaire_index_selectionne > index:
             inventaire_index_selectionne -= 1
 
+def synchroniser_bottes_double_saut():
+    global bottes_equipees
+    if joueur.double_saut:
+        ajouter_objet_inventaire("bottes")
+        bottes_equipees = True
+    elif bottes_equipees:
+        bottes_equipees = False
 
-# Bruit/sfx dialogue de npc
+
+# ----------------------------
+# NPC
+# ----------------------------
+# Son de dialogue standard des NPC.
 npcsfx = sfx.sfxnpc
 npcsfx.set_volume(0.1)
-# NPC 1  Giordano (animation 3 frames)
-giordano  = pygame.transform.scale(pygame.image.load("images/giordano.png").convert_alpha(),  (160, 105))
-giordano2 = pygame.transform.scale(pygame.image.load("images/giordano2.png").convert_alpha(), (160, 105))
-giordano3 = pygame.transform.scale(pygame.image.load("images/giordano3.png").convert_alpha(), (160, 105))
+
+# Boutons d'interaction reutilises par plusieurs systemes.
+bouton_e      = pygame.image.load("images/GUI/bouton_e.png").convert_alpha()
+bouton_e_rect = bouton_e.get_rect(topleft=(1600, 6150))
+bouton_e      = pygame.transform.scale(bouton_e, (50, 50))
+bouton_f      = pygame.image.load("images/GUI/bouton_f.png").convert_alpha()
+bouton_f      = pygame.transform.scale(bouton_f, (50, 50))
+
+# NPC 1 - Giordano
+# Animation 3 frames.
+giordano  = pygame.transform.scale(pygame.image.load("images/Npc/Textures/giordano.png").convert_alpha(),  (160, 105))
+giordano2 = pygame.transform.scale(pygame.image.load("images/Npc/Textures/giordano2.png").convert_alpha(), (160, 105))
+giordano3 = pygame.transform.scale(pygame.image.load("images/Npc/Textures/giordano3.png").convert_alpha(), (160, 105))
 giordano_images      = [giordano, giordano2, giordano3]
+
+# Variables d'animation de Giordano.
 current_giordano     = 0
 giordano_anim_timer  = 0
 giordano_forward     = True
@@ -299,13 +327,9 @@ giordano_pause_timer = 0
 giordano_rect = giordano.get_rect()
 giordano_rect.topleft = (1600, 6190)
 
-bouton_e      = pygame.image.load("images/bouton_e.png").convert_alpha()
-bouton_e_rect = bouton_e.get_rect(topleft=(1600, 6150))
-bouton_e      = pygame.transform.scale(bouton_e, (50, 50))
-bouton_f      = pygame.image.load("images/bouton_f.png").convert_alpha()
-bouton_f      = pygame.transform.scale(bouton_f, (50, 50))
+# "dialogue_g" dit si la fenetre de dialogue de Giordano est ouverte.
 dialogue_g    = False
-cadre_g       = pygame.image.load("images/cadre_dialogue1.png").convert_alpha()
+cadre_g       = pygame.image.load("images/Npc/Dialogues/cadre_dialogue_giordano.png").convert_alpha()
 cadre_g_rect  = cadre_g.get_rect(center=(640, 550))
 messages      = ["GALILEO !!", "C'EST UN ENFER !"]
 
@@ -323,44 +347,73 @@ mortsfx = sfx.mortsfx
 mortsfx.set_volume(1.0 if settings.option_3 else 0)
 
 
-# --- Cooldowns NPC ---
+# Variables partagees par les dialogues.
+# "counter" suit la progression de l'ecriture lettre par lettre.
+# "speed" regle la vitesse d'affichage du texte.
+# "done" passe a True quand le message courant est entierement affiche.
+
+# Cooldowns des interactions NPC.
+# "duree_cooldown" evite de redonner une recompense trop souvent.
+# "duree_dialogue_cooldown" evite de rouvrir un dialogue instantanement.
 giordano_cooldown = -30000
 virgilio_cooldown = -30000
 duree_cooldown    = 30000
 giordano_dialogue_cooldown = -3000
 virgilio_dialogue_cooldown = -3000
 condamne1_dialogue_cooldown = -3000
+caronte_dialogue_cooldown = -3000
 duree_dialogue_cooldown = 3000
 
-# NPC 2  Virgilio
-virgilio      = pygame.transform.scale(pygame.image.load("images/virgilio.png").convert_alpha(), (60, 120))
+# NPC 2 - Virgilio
+virgilio      = pygame.transform.scale(pygame.image.load("images/Npc/Textures/virgilio.png").convert_alpha(), (60, 120))
 virgilio_rect = virgilio.get_rect()
 virgilio_rect.topleft = (700, 4080)
+# "dialogue_v" dit si le dialogue de Virgilio est ouvert.
 dialogue_v    = False
-cadre_v       = pygame.image.load("images/cadre_dialogue2.png").convert_alpha()
+cadre_v       = pygame.image.load("images/Npc/Dialogues/cadre_dialogue_virgilio.png").convert_alpha()
 cadre_v_rect  = cadre_v.get_rect(center=(640, 550))
 
+# "active_message" est l'index du message courant de Giordano.
 counter         = 0
 speed           = 5
 active_message  = 0
 message         = messages[active_message]
 done            = False
-message_v       = ["Salut Giordano !", "Fais attention car les plateformes deviennent hautes !","Prends ces bottes pour sauter deux fois."]
+# "active_message2" est l'index du message courant dans "message_v".
+message_v       = ["Salut Galileo !", "Fais attention car les plateformes deviennentchautes !","Prends ces bottes pour sauter deux fois."]
 active_message2 = 0
 message2        = message_v[active_message2]
 
 # NPC 3 -- Condamnés
 condamnesfx = sfx.dialogue_csfx
-condamne1 = pygame.transform.scale(pygame.image.load("images/condamne1.png").convert_alpha(), (112, 112))
+condamne1 = pygame.transform.scale(pygame.image.load("images/Npc/Textures/condamne1.png").convert_alpha(), (112, 112))
 condamne1_rect = condamne1.get_rect()
 condamne1_rect.topleft = (300, 5737)
+# "dialogue_c1" dit si le dialogue du condamne est ouvert.
 dialogue_c1 = False
-cadre_c1 = pygame.image.load("images/cadre_dialogue_c1.png").convert_alpha()
+cadre_c1 = pygame.image.load("images/Npc/Dialogues/cadre_dialogue_condamne.png").convert_alpha()
 cadre_c1_rect  = cadre_c1.get_rect(center=(640, 550))
 
+# "active_message_c1" est l'index du message courant dans "message_c1".
 message_c1 = ["...", "...", "Aide mo-", "...", "*ne bouge plus*"]
 active_message_c1 = 0
 message3 = message_c1[active_message_c1]
+
+# NPC 4 -- Caronte
+carontesfx = sfx.carontesfx
+caronte = pygame.transform.scale(pygame.image.load("images/Npc/Textures/caronte.png").convert_alpha(), (64, 120))
+caronte_rect = caronte.get_rect()
+caronte_rect.topleft = (3850, 5380)
+dialogue_caronte = False
+cadre_caronte = pygame.image.load("images/Npc/Dialogues/cadre_dialogue_caronte.png").convert_alpha()
+cadre_caronte_rect  = cadre_caronte.get_rect(center=(640, 550))
+message_caronte = ["Je suis Caronte, le passeur des Enfers.", "Si tu veux sortir d'ici, tu devras m'aider à passer\nsur le fleuve.","Des codamnés y abritent et tentent de nous faire\ncouler moi et mon bateau. ", "Aide moi à passer et je te donnerai un cadeau\nen échange."]
+active_message_caronte = 0
+message4 = message_caronte[active_message_caronte]
+
+bateau = pygame.image.load("images/Divers/bateau.png").convert_alpha()
+bateau_rect = bateau.get_rect()
+bateau_rect.topleft = (3800, 5380)
 
 # MURS
 plateformes_haute = get_plateformeshaute()
@@ -378,7 +431,7 @@ else:
 if not settings.option_3:
     _vol = 0
     sfx.viesfx.set_volume(_vol)
-    sfx.sfxdialogue.set_volume(_vol)
+    sfx.sfxtitre.set_volume(_vol)
     sfx.fin.set_volume(_vol)
     sfx.liresfx.set_volume(_vol)
     sfx.stoplire.set_volume(_vol)
@@ -390,6 +443,7 @@ if not settings.option_3:
     sfx.pausesfxbutton.set_volume(_vol)
     sfx.sfxnpc.set_volume(_vol)
     sfx.dialogue_csfx.set_volume(_vol)
+    sfx.carontesfx.set_volume(_vol)
     sfx.degat.set_volume(_vol)
     sfx.mortsfx.set_volume(_vol)
     sfx.satan.set_volume(_vol)
@@ -398,16 +452,38 @@ if not settings.option_3:
 plateformes_prison = get_plateforme_prison()
 plateformes_niveau = get_plateformes()
 plateformes        = plateformes_niveau
+plateformes2 = plateforme_2()
 sol                = get_sol()
 niveau_largeur     = 5000
 sol2 = get_sol2()
 
+# Permet d'attribuer au plateformes une image correspondante
+# Le except sert à ce que le jeu ne crash pas si l'image est introuvable
 try:
-    platform_image_orig  = pygame.image.load("images/plateforme_moyenne.png").convert_alpha()
-    platform_petite_orig = pygame.image.load("images/plateforme_petite.png").convert_alpha()
+    platform_image_orig  = pygame.image.load("images/Plateformes/Niveau1/plateforme_moyenne.png").convert_alpha()
+    platform_petite_orig = pygame.image.load("images/Plateformes/Niveau1/plateforme_petite.png").convert_alpha()
+    plateforme2_img = pygame.image.load("images/Plateformes/Niveau2/plateforme2.png").convert_alpha()
+    mur_prison_orig   = pygame.image.load("images/Plateformes/Niveau1/murprison.png").convert_alpha()
+    sol_image_orig = pygame.image.load("images/Plateformes/Niveau1/sol.png").convert_alpha()
+    pic_sol_orig     = pygame.image.load("images/Plateformes/pic_sol.png").convert_alpha()
+    pic_plafond_orig = pygame.image.load("images/Plateformes/pic_plafond.png").convert_alpha()
+    sol2_image_orig = pygame.image.load("images/Plateformes/Niveau2/sol_niveau2.png").convert_alpha()
+    mur2_image_orig = pygame.image.load("images/Plateformes/Niveau2/mur_niveau2.png").convert_alpha()
 except:
     platform_image_orig  = None
     platform_petite_orig = None
+    plateforme2_img = None
+    mur_prison_orig = None
+    sol_image_orig = None
+    pic_sol_orig     = None
+    pic_plafond_orig = None
+    sol2_image_orig = None
+    mur2_image_orig = None
+
+#--------------------------------------------------------------
+# IMAGES PLATEFORMES 
+#--------------------------------------------------------------
+# Crée une liste où on stockera les images des plateformes redimensionnées à la bonne taille
 
 platform_images = []
 for plateforme in plateformes:
@@ -421,19 +497,16 @@ for plateforme in plateformes:
     else:
         platform_images.append(None)
 
-sol_image_orig = pygame.image.load("images/sol.png").convert_alpha()
 sol_images = []
 for s in sol:
     img = pygame.transform.scale(sol_image_orig, (s.width, s.height))
     sol_images.append(img)
 
-sol2_image_orig = pygame.image.load("images/sol_niveau2.png").convert_alpha()
 sol2_images = []
 for s in sol2:
     img = pygame.transform.scale(sol2_image_orig, (s.width, s.height))
     sol2_images.append(img)
 
-mur2_image_orig = pygame.image.load("images/mur_niveau2.png").convert_alpha()
 mur2_images = []
 for s in mur2:
     img = pygame.transform.scale(mur2_image_orig, (s.width, s.height))
@@ -442,9 +515,6 @@ for s in mur2:
 # Plateformes de danger
 plateformes_danger  = plateforme_pic()
 plateformes_danger2 = plateforme_pic2()
-
-pic_sol_orig     = pygame.image.load("images/pic_sol.png").convert_alpha()
-pic_plafond_orig = pygame.image.load("images/pic_plafond.png").convert_alpha()
 
 pic_sol_images = []
 for plat in plateformes_danger:
@@ -457,14 +527,20 @@ for plat in plateformes_danger2:
     pic_plafond_images.append(img)
 
 # Murs prison
-mur_prison_orig   = pygame.image.load("images/murprison.png").convert_alpha()
 mur_prison_images = []
 for mur in plateformes_prison:
     img = pygame.transform.scale(mur_prison_orig, (mur.width, mur.height))
     mur_prison_images.append(img)
 
+# Plateforme du niveau 2
+plateforme2_images = []
+for plat in plateformes2:
+    img = pygame.transform.scale(plateforme2_img,(plat.width,plat.height))
+    plateforme2_images.append(img)
+
+
 # Background
-background_orig = pygame.image.load("images/background.png").convert_alpha()
+background_orig = pygame.image.load("images/Fonds/background.png").convert_alpha()
 img_w, img_h    = background_orig.get_size()
 ratio           = max(screen_width / img_w, screen_height / img_h)
 bg_width        = int(img_w * ratio * zoom_factor)
@@ -508,14 +584,14 @@ pause_hover_index = -1
 pause_button_width  = 280
 pause_button_height = 56
 
-# --- Menu paramÃ¨tres en pause ---
+# --- Menu paramètres en pause ---
 afficher_parametres_pause = False
-parametre_gui_pause  = pygame.transform.scale(pygame.image.load("images/parametre.png").convert_alpha(), (screen_width, screen_height))
+parametre_gui_pause  = pygame.transform.scale(pygame.image.load("images/Paramètre/parametre.png").convert_alpha(), (screen_width, screen_height))
 parametre_gui_rect_p = parametre_gui_pause.get_rect(center=(screen_width // 2, screen_height // 2))
-fermer_pause         = pygame.transform.scale(pygame.image.load("images/fermer_fenetre.png").convert_alpha(), (50, 50))
+fermer_pause         = pygame.transform.scale(pygame.image.load("images/Paramètre/fermer_fenetre.png").convert_alpha(), (50, 50))
 fermer_pause_rect    = fermer_pause.get_rect(topleft=(1200, 30))
-activer_p            = pygame.transform.scale(pygame.image.load("images/activer.png").convert_alpha(), (150, 75))
-desactiver_p         = pygame.transform.scale(pygame.image.load("images/desactiver.png").convert_alpha(), (150, 75))
+activer_p            = pygame.transform.scale(pygame.image.load("images/Paramètre/activer.png").convert_alpha(), (150, 75))
+desactiver_p         = pygame.transform.scale(pygame.image.load("images/Paramètre/desactiver.png").convert_alpha(), (150, 75))
 police_param_pause   = pygame.font.Font("asset/polices/ari-w9500-bold.ttf", 34)
 parametres_toggles_pause = [
     {"name": "musique",  "enabled": settings.musique,  "rect": pygame.Rect(100, 150, 150, 75)},
@@ -529,12 +605,12 @@ def reset():
     global vies, etat, invincible, invincibilite_temps
     global death_animation_start, death_sound_stage
     global speedrun, speedrun_started, speedrun_start_time, speedrun_elapsed, speedrun_pause_start, speedrun_finished, speedrun_final_time
-    global dialogue_g, dialogue_v, dialogue_c1
-    global active_message, active_message2, active_message_c1
-    global message, message2, message3
+    global dialogue_g, dialogue_v, dialogue_c1, dialogue_caronte
+    global active_message, active_message2, active_message_c1, active_message_caronte
+    global message, message2, message3, message4
     global counter, done
     global giordano_cooldown, virgilio_cooldown
-    global giordano_dialogue_cooldown, virgilio_dialogue_cooldown, condamne1_dialogue_cooldown
+    global giordano_dialogue_cooldown, virgilio_dialogue_cooldown, condamne1_dialogue_cooldown, caronte_dialogue_cooldown
     global bottes_equipees, epee_equipee, inventaire, inventaire_index_selectionne, tooltip_inventaire_visible
     global inventaire_affiche, lire_pancarte, pancarte_active, panneau_button_hidden
     global titre_index, titre_fin
@@ -568,12 +644,15 @@ def reset():
     dialogue_g = False
     dialogue_v = False
     dialogue_c1 = False
+    dialogue_caronte = False
     active_message = 0
     active_message2 = 0
     active_message_c1 = 0
+    active_message_caronte = 0
     message = messages[0]
     message2 = message_v[0]
     message3 = message_c1[0]
+    message4 = message_caronte[0]
     counter = 0
     done = False
 
@@ -582,6 +661,7 @@ def reset():
     giordano_dialogue_cooldown = -3000
     virgilio_dialogue_cooldown = -3000
     condamne1_dialogue_cooldown = -3000
+    caronte_dialogue_cooldown = -3000
 
     bottes_equipees = False
     epee_equipee = False
@@ -613,6 +693,8 @@ def reset():
 
     pygame.mixer.unpause()
 
+synchroniser_bottes_double_saut()
+
 # -------------------------------------------------------------------------------------------------#
 # Boucle principale
 # -------------------------------------------------------------------------------------------------#
@@ -622,12 +704,14 @@ ground_jump_consumed = False
 while running:
     clock.tick(60)
     current_time  = pygame.time.get_ticks()
+    synchroniser_bottes_double_saut()
     button_offset = int(math.sin(current_time * 0.01) * 3)
     player_visual_rect = joueur.rect
     active_porte = joueur.rect.colliderect(porte_rect)
     active = player_visual_rect.colliderect(giordano_rect)
     active2 = player_visual_rect.colliderect(virgilio_rect)
     active3 = player_visual_rect.colliderect(condamne1_rect)
+    active4 = player_visual_rect.colliderect(caronte_rect)
     pancarte_active = joueur.rect.colliderect(panneau_rect) and not panneau_button_hidden
 
     # Animation de Giordano
@@ -661,7 +745,7 @@ while running:
                 giordano_anim_timer = current_time
             giordano_pause = False
 
-    # ---- ÉvÃ¨nements ----
+    # ---- Évènements ----
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -670,6 +754,7 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
+                # Double jump
                 if joueur.peut_bouger and joueur.double_saut and joueur.nb_sauts == 1 and not jump_key_held:
                     jump_key_held = True
                     joueur.vel_y = joueur.jump_force
@@ -686,14 +771,15 @@ while running:
                         'width': 120,
                         'height': 7
                     })
+            # Mettre en pause avec echappe
             if event.key == pygame.K_ESCAPE:
                 if afficher_parametres_pause:
-                    # Ferme les paramÃ¨tres, retour au menu pause
+                    # Ferme les paramètres, retour au menu pause
                     afficher_parametres_pause = False
                     pause_button_sfx.play()
                 else:
                     en_pause = not en_pause
-                    joueur.peut_bouger = not (en_pause or lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
+                    joueur.peut_bouger = not (en_pause or lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1 or dialogue_caronte)
                     if en_pause:
                         mettre_speedrun_en_pause(current_time)
                         joueur.mettre_en_pause(current_time)
@@ -723,7 +809,7 @@ while running:
                     action = boutons_pause[pause_selected]["action"]
                     if action == "reprendre":
                         en_pause = False
-                        joueur.peut_bouger = not (lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
+                        joueur.peut_bouger = not (lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1 or dialogue_caronte)
                         reprendre_speedrun_apres_pause(current_time)
                         joueur.reprendre_apres_pause(current_time)
                         pygame.mixer.unpause()
@@ -836,6 +922,32 @@ while running:
                     counter = 0
                     active_message_c1 = 0
                     message3 = message_c1[0]
+            #---Caronte
+            elif event.key == pygame.K_e and dialogue_caronte:
+                if not done:
+                    counter = speed * len(message4)
+                    carontesfx.stop()
+                else:
+                    if active_message_caronte < len(message_caronte) - 1:
+                        active_message_caronte += 1
+                        message4 = message_caronte[active_message_caronte]
+                        counter = 0
+                        done = False
+                    else:
+                        dialogue_caronte = False
+                        done = False
+                        active_message_caronte = 0
+                        counter = 0
+                        joueur.peut_bouger = True
+                        caronte_dialogue_cooldown = current_time
+            elif event.key == pygame.K_e and active4 and not dialogue_caronte:
+                if current_time - caronte_dialogue_cooldown > duree_dialogue_cooldown:
+                    dialogue_caronte = True
+                    joueur.peut_bouger = False
+                    counter = 0
+                    active_message_caronte = 0
+                    message4 = message_caronte[0]
+                    done = False
             elif event.key == pygame.K_e and pancarte_active and not lire_pancarte:
                 lire_pancarte = True
                 joueur.peut_bouger = False
@@ -853,7 +965,7 @@ while running:
             elif event.key == pygame.K_e and active_porte:
                 transition_porte_enfer_start = current_time
                 joueur.peut_bouger = False
-            elif event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1:
+            elif event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1 and not dialogue_caronte:
                 ouvrir_inv.play()
                 inventaire_affiche = True
                 joueur.peut_bouger = False
@@ -866,7 +978,6 @@ while running:
                 tooltip_inventaire_visible = False
                 inventaire_index_selectionne = None
                 joueur.peut_bouger = True
-
         if event.type == pygame.MOUSEMOTION and en_pause and not afficher_parametres_pause:
             mx, my = event.pos
             for i, bouton in enumerate(boutons_pause):
@@ -901,7 +1012,7 @@ while running:
                         action = bouton["action"]
                         if action == "reprendre":
                             en_pause = False
-                            joueur.peut_bouger = not (lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
+                            joueur.peut_bouger = not (lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1 or dialogue_caronte)
                             reprendre_speedrun_apres_pause(current_time)
                             joueur.reprendre_apres_pause(current_time)
                             pygame.mixer.unpause()
@@ -945,8 +1056,6 @@ while running:
                             elif item_id == "epee":
                                 epee_equipee = not epee_equipee
                             tooltip_inventaire_visible = False
-
-    # Si un objet a été ajouter dans l'inventaire, jouer objetsfx
 
     keys = pygame.key.get_pressed()
 
@@ -994,9 +1103,10 @@ while running:
         panneau_button_hidden = False
 
     # ---- Physique ----
+    # Permet d'ajouter la collisions avec les plateformes
     if not en_pause and not transition_recommencer and not transition_porte_enfer_start and etat != "mort":
-        joueur.deplacement(plateformes + plateformes_prison + sol + sol2 + mur2)
-        joueur.appliquer_gravite(plateformes + plateformes_prison + sol + sol2 + mur2, murs=plateformes_haute)
+        joueur.deplacement(plateformes + plateformes_prison + sol + sol2 + mur2 + plateformes2)
+        joueur.appliquer_gravite(plateformes + plateformes_prison + sol + sol2 + mur2 + plateformes2, murs=plateformes_haute)
         joueur.update_double_jump_effects()
 
         if not invincible:
@@ -1183,7 +1293,8 @@ while running:
     screen.blit(giordano_images[current_giordano], (giordano_rect.x - camera_x, giordano_rect.y - camera_y))
     screen.blit(virgilio, (virgilio_rect.x - camera_x, virgilio_rect.y - camera_y))
     screen.blit(condamne1, (condamne1_rect.x - camera_x, condamne1_rect.y - camera_y))
-
+    screen.blit(caronte, (caronte_rect.x - camera_x, caronte_rect.y - camera_y))
+    screen.blit(bateau,(bateau_rect.x,bateau_rect.y))
 
     # Monstre
     monstre.draw(screen, camera_x, camera_y)
@@ -1199,7 +1310,11 @@ while running:
         sprite_y = joueur.rect.bottom - camera_y - joueur.image.get_height() + joueur.draw_offset_y
         screen.blit(joueur.image, (sprite_x, sprite_y))
 
+#-----------------------------------------------
+# RENDU DES PLATEFORMES
+#-----------------------------------------------
 
+# Parcours deux listes avec zip, celles des plateformes et des images correspondantes, pour afficher chaque plateforme à sa position avec la bonne image.
 
     # Murs prison
     for mur, img in zip(plateformes_prison, mur_prison_images):
@@ -1223,6 +1338,10 @@ while running:
     # Sol2
     for s, img in zip(sol2, sol2_images):
         screen.blit(img, (s.x - camera_x, s.y - camera_y))
+    # Plateforme2
+    for s, img in zip(plateformes2, plateforme2_images):
+        if img:
+            screen.blit(img, (s.x - camera_x, s.y - camera_y))
     # Sol
     for s, img in zip(sol, sol_images):
         screen.blit(img, (s.x - camera_x, s.y - camera_y - 15))
@@ -1282,7 +1401,7 @@ while running:
         screen.blit(double_jump, (screen_width - 150, screen_height - 260))
 
     # HUD  Icône inventaire
-    if not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1:
+    if not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1 and not dialogue_caronte:
         screen.blit(icone_inventaire, (screen_width - 150, screen_height - 150))
         screen.blit(lettre_f, (screen_width - 107, screen_height - 175))
 
@@ -1293,14 +1412,16 @@ while running:
     if active and not dialogue_g:
         screen.blit(bouton_e, (bouton_e_rect.x - camera_x, bouton_e_rect.y - camera_y + button_offset))
     if dialogue_g:
-        snip = police.render(message[0:counter // speed], True, '#4f2310')
+        texte_affiche = message[0:counter // speed]
         joueur.peut_bouger = False
         joueur.is_animating = False
         screen.blit(cadre_g, cadre_g_rect)
-        screen.blit(snip, (480, 470))
+        for i, ligne in enumerate(texte_affiche.split("\n")):
+            snip = police.render(ligne, True, '#4f2310')
+            screen.blit(snip, (480, 470 + i * 30))
         if not en_pause and counter < speed * len(message):
             counter += 1
-            if counter % speed == 0:
+            if counter % speed == 0 and npcsfx.get_num_channels() == 0:
                 npcsfx.play()
         elif counter >= speed * len(message):
             npcsfx.stop()
@@ -1311,14 +1432,16 @@ while running:
     if active2 and not dialogue_v:
         screen.blit(bouton_e, ((bouton_e_rect.x - 900) - camera_x, (bouton_e_rect.y - 2110) - camera_y + button_offset))
     if dialogue_v:
-        snip = police.render(message2[0:counter // speed], True, '#4f2310')
+        texte_affiche = message2[0:counter // speed]
         joueur.peut_bouger = False
         joueur.is_animating = False
         screen.blit(cadre_v, cadre_v_rect)
-        screen.blit(snip, (480, 470))
+        for i, ligne in enumerate(texte_affiche.split("\n")):
+            snip = police.render(ligne, True, '#4f2310')
+            screen.blit(snip, (480, 470 + i * 30))
         if not en_pause and counter < speed * len(message2):
             counter += 1
-            if counter % speed == 0:
+            if counter % speed == 0 and npcsfx.get_num_channels() == 0:
                 npcsfx.play()
         elif counter >= speed * len(message2):
             npcsfx.stop()
@@ -1332,17 +1455,42 @@ while running:
             (5730) - camera_y + button_offset
         ))
     if dialogue_c1:
-        snip = police.render(message3[0:counter // speed], True, '#4f2310')
+        texte_affiche = message3[0:counter // speed]
         joueur.peut_bouger = False
         joueur.is_animating = False
         screen.blit(cadre_c1, cadre_c1_rect)
-        screen.blit(snip, (480, 470))
+        for i, ligne in enumerate(texte_affiche.split("\n")):
+            snip = police.render(ligne, True, '#4f2310')
+            screen.blit(snip, (480, 470 + i * 30))
         if not en_pause and counter < speed * len(message3):
             counter += 1
-            if counter % speed == 0:
+            if counter % speed == 0 and condamnesfx.get_num_channels() == 0:
                 condamnesfx.play()
         elif counter >= speed * len(message3):
             condamnesfx.stop()
+            done = True
+            screen.blit(bouton_e, (1020, 550 + button_offset))
+
+    # Caronte bouton E + dialogue
+    if active4 and not dialogue_caronte:
+        screen.blit(
+            bouton_e,
+            (caronte_rect.centerx - camera_x - 25, caronte_rect.y - camera_y - 35 + button_offset)
+        )
+    if dialogue_caronte:
+        texte_affiche = message4[0:counter // speed]
+        joueur.peut_bouger = False
+        joueur.is_animating = False
+        screen.blit(cadre_caronte, cadre_caronte_rect)
+        for i, ligne in enumerate(texte_affiche.split("\n")):
+            snip = police.render(ligne, True, '#4f2310')
+            screen.blit(snip, (480, 470 + i * 30))
+        if not en_pause and counter < speed * len(message4):
+            counter += 1
+            if counter % speed == 0 and carontesfx.get_num_channels() == 0:
+                carontesfx.play()
+        elif counter >= speed * len(message4):
+            carontesfx.stop()
             done = True
             screen.blit(bouton_e, (1020, 550 + button_offset))
 
@@ -1350,9 +1498,9 @@ while running:
     if not en_pause and titre_index < speed * len(titre):
         titre_index += 1
         if titre_index % speed == 0:
-            dialogue_sfx.play()
+            titre_sfx.play()
     elif not en_pause and titre_index >= speed * len(titre) and titre_fin == 0:
-        dialogue_sfx.stop()
+        titre_sfx.stop()
         titre_fin = pygame.time.get_ticks()
 
     titre_texte = police_titre.render(titre[0:titre_index // speed], True, 'white')
@@ -1437,7 +1585,7 @@ while running:
                 fleche = police_bouton.render(">", True, "#f5c542")
                 screen.blit(fleche, (rect_bouton.x - 35, rect_bouton.centery - fleche.get_height() // 2))
 
-    # Menu paramÃ¨tres (par-dessus la pause)
+    # Menu paramètres (par-dessus la pause)
     if en_pause and afficher_parametres_pause:
         screen.blit(parametre_gui_pause, parametre_gui_rect_p)
         screen.blit(fermer_pause, fermer_pause_rect)
@@ -1517,7 +1665,7 @@ while running:
             alpha = int((1 - ((temps_transition_porte - 4500) / 500)) * 255)
         else:
             transition_porte_enfer_start = 0
-            joueur.peut_bouger = not (en_pause or lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1)
+            joueur.peut_bouger = not (en_pause or lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1 or dialogue_caronte)
             alpha = 0
 
         if alpha > 0:
@@ -1525,6 +1673,9 @@ while running:
             fondu.fill((0, 0, 0))
             fondu.set_alpha(alpha)
             screen.blit(fondu, (0, 0))
+
+    pos = pygame.mouse.get_pos()
+    screen.blit(curseur_img, pos)
     pygame.display.flip()
 
 pygame.quit()
