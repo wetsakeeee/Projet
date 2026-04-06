@@ -105,7 +105,8 @@ def get_sol2():
     ]
 def mur2():
     return [
-        pygame.Rect(3484, 5497, 616, 1004)
+        pygame.Rect(3484, 5497, 616, 1004),
+        pygame.Rect(2000, 4000, 546, 2133),
     ]
 def plateforme_2():
     return [
