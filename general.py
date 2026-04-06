@@ -113,7 +113,7 @@ def appliquer_parametre_jeu(param_name, enabled):
         settings.speedrun = enabled
     elif param_name == "option_3":
         settings.option_3 = enabled
-        vol = 0 if not enabled else 1.0
+        vol = 0 if not enabled else 0.2
         sfx.viesfx.set_volume(vol)
         sfx.sfxtitre.set_volume(0.5 if enabled else 0)
         sfx.fin.set_volume(0.5 if enabled else 0)
@@ -209,9 +209,6 @@ inventaire_img             = pygame.transform.scale(pygame.image.load("images/GU
 inventaire_affiche         = False
 inventaire_timer           = 0
 show_button_f_inventaire   = False
-ouvrir_inv = sfx.ouvrir_inv
-fermer_inv = sfx.fermer_inv
-select     = sfx.selectsfx
 pause_ouvrir_sfx = sfx.pausesfxouvrir
 pause_fermer_sfx = sfx.pausesfxfermer
 pause_button_sfx = sfx.pausesfxbutton
@@ -411,15 +408,15 @@ message_caronte = ["Je suis Caronte, le passeur des Enfers.", "Si tu veux sortir
 active_message_caronte = 0
 message4 = message_caronte[active_message_caronte]
 
-bateau = pygame.image.load("images/Divers/bateau.png").convert_alpha()
+bateau = pygame.transform.scale(pygame.image.load("images/Divers/bateau.png").convert_alpha(), (300,130))
 bateau_rect = bateau.get_rect()
-bateau_rect.topleft = (3800, 5380)
+bateau_rect.topleft = (3500, 5370)
 
 # MURS
 plateformes_haute = get_plateformeshaute()
 mur2 = mur2()
 # Music
-pygame.mixer.init(44100)
+pygame.mixer.init(48200)
 ambient = sfx.musiquefond
 if settings.musique:
     ambient.set_volume(0.2)
@@ -469,6 +466,7 @@ try:
     pic_plafond_orig = pygame.image.load("images/Plateformes/pic_plafond.png").convert_alpha()
     sol2_image_orig = pygame.image.load("images/Plateformes/Niveau2/sol_niveau2.png").convert_alpha()
     mur2_image_orig = pygame.image.load("images/Plateformes/Niveau2/mur_niveau2.png").convert_alpha()
+    mur2_2_image_orig = pygame.image.load("images/Plateformes/Niveau2/mur2_niveau2.png").convert_alpha()
 except:
     platform_image_orig  = None
     platform_petite_orig = None
@@ -479,6 +477,7 @@ except:
     pic_plafond_orig = None
     sol2_image_orig = None
     mur2_image_orig = None
+    mur2_2_image_orig = None
 
 #--------------------------------------------------------------
 # IMAGES PLATEFORMES 
@@ -508,9 +507,13 @@ for s in sol2:
     sol2_images.append(img)
 
 mur2_images = []
-for s in mur2:
-    img = pygame.transform.scale(mur2_image_orig, (s.width, s.height))
-    mur2_images.append(img)
+for index, s in enumerate(mur2):
+    orig = mur2_image_orig if index == 0 else mur2_2_image_orig
+    if orig:
+        img = pygame.transform.scale(orig, (s.width, s.height))
+        mur2_images.append(img)
+    else:
+        mur2_images.append(None)
 
 # Plateformes de danger
 plateformes_danger  = plateforme_pic()
@@ -706,12 +709,11 @@ while running:
     current_time  = pygame.time.get_ticks()
     synchroniser_bottes_double_saut()
     button_offset = int(math.sin(current_time * 0.01) * 3)
-    player_visual_rect = joueur.rect
     active_porte = joueur.rect.colliderect(porte_rect)
-    active = player_visual_rect.colliderect(giordano_rect)
-    active2 = player_visual_rect.colliderect(virgilio_rect)
-    active3 = player_visual_rect.colliderect(condamne1_rect)
-    active4 = player_visual_rect.colliderect(caronte_rect)
+    active = joueur.rect.colliderect(giordano_rect)
+    active2 = joueur.rect.colliderect(virgilio_rect)
+    active3 = joueur.rect.colliderect(condamne1_rect)
+    active4 = joueur.rect.colliderect(caronte_rect)
     pancarte_active = joueur.rect.colliderect(panneau_rect) and not panneau_button_hidden
 
     # Animation de Giordano
@@ -966,13 +968,13 @@ while running:
                 transition_porte_enfer_start = current_time
                 joueur.peut_bouger = False
             elif event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1 and not dialogue_caronte:
-                ouvrir_inv.play()
+                sfx.ouvrir_inv.play()
                 inventaire_affiche = True
                 joueur.peut_bouger = False
                 inventaire_timer = current_time
                 show_button_f_inventaire = False
             elif event.key == pygame.K_f and inventaire_affiche:
-                fermer_inv.play()
+                sfx.fermer_inv.play()
                 inventaire_affiche = False
                 show_button_f_inventaire = False
                 tooltip_inventaire_visible = False
@@ -1035,7 +1037,7 @@ while running:
                     for index, item in enumerate(inventaire):
                         slot_rect = get_slot_inventaire_rect(index)
                         if slot_rect.collidepoint(event.pos):
-                            select.play()
+                            sfx.select.play()
                             inventaire_index_selectionne = index
                             tooltip_inventaire_visible = ITEMS_INVENTAIRE[item["id"]]["utilisable"]
                             break
@@ -1044,7 +1046,7 @@ while running:
                         slot_rect = get_slot_inventaire_rect(inventaire_index_selectionne)
                         tooltip_equiper_rect = pygame.Rect(slot_rect.right + 10, slot_rect.y, 130, 40)
                         if tooltip_equiper_rect.collidepoint(event.pos):
-                            select.play()
+                            sfx.select.play()
                             item_id = inventaire[inventaire_index_selectionne]["id"]
                             if item_id == "bottes":
                                 if bottes_equipees:
@@ -1294,7 +1296,7 @@ while running:
     screen.blit(virgilio, (virgilio_rect.x - camera_x, virgilio_rect.y - camera_y))
     screen.blit(condamne1, (condamne1_rect.x - camera_x, condamne1_rect.y - camera_y))
     screen.blit(caronte, (caronte_rect.x - camera_x, caronte_rect.y - camera_y))
-    screen.blit(bateau,(bateau_rect.x,bateau_rect.y))
+    screen.blit(bateau,(bateau_rect.x - camera_x,bateau_rect.y - camera_y))
 
     # Monstre
     monstre.draw(screen, camera_x, camera_y)
@@ -1352,7 +1354,8 @@ while running:
             screen.blit(debug_surface, (s.x - camera_x, s.y - camera_y))
     # Mur2
     for s, img in zip(mur2, mur2_images):
-        screen.blit(img, (s.x - camera_x, s.y - camera_y))
+        if img:
+            screen.blit(img, (s.x - camera_x, s.y - camera_y))
 
     # Pics sol
     for plat, img in zip(plateformes_danger, pic_sol_images):
@@ -1475,7 +1478,7 @@ while running:
     if active4 and not dialogue_caronte:
         screen.blit(
             bouton_e,
-            (caronte_rect.centerx - camera_x - 25, caronte_rect.y - camera_y - 35 + button_offset)
+            (caronte_rect.centerx - camera_x + 50, caronte_rect.y - camera_y - 35 + button_offset)
         )
     if dialogue_caronte:
         texte_affiche = message4[0:counter // speed]
