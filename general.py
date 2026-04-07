@@ -1,12 +1,12 @@
-import pygame
-import subprocess
+import pygame, sys, subprocess, time
 import math
 from joueur import Joueur
 from monstre import Monstre
 from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2, mur2, plateforme_2
-import sfx, sys
-from sfx import sauter, sfxmarche1, sfxmarche2, sfxmarche3, tombersfx
+import sfx
+from sfx import sauter, sfxmarche1, sfxmarche2, sfxmarche3, tombersfx, musiquefond, sfxboutton
 import settings
+
 from pathlib import Path
 # ----------------------------
 # Initialisation Pygame
@@ -16,7 +16,7 @@ screen_width, screen_height = 1280, 720
 screen = pygame.display.set_mode((screen_width, screen_height))
 icon = pygame.image.load("images/logo.png").convert_alpha()
 pygame.display.set_icon(icon)
-pygame.display.set_caption("Galileo Galilei")
+pygame.display.set_caption("Galileo Galilei : Across the afterife")
 clock = pygame.time.Clock()
 etat = "jeu"
 
@@ -46,7 +46,7 @@ DEATH_GAME_OVER_DELAY_MS = (
 titre_logo = pygame.image.load("images/titre.png").convert_alpha()
 titre_rect = titre_logo.get_rect(midtop=(screen_width // 2, 100))
 
-vies = 10
+vies = 3
 
 # --- SPEEDRUN TIMER ---
 speedrun = settings.speedrun
@@ -338,6 +338,7 @@ satan1 = pygame.transform.scale(pygame.image.load("images/animation_fin/satan1.p
 satan1.set_colorkey((0, 0, 0))
 satan2 = pygame.transform.scale(pygame.image.load("images/animation_fin/satan2.png").convert_alpha(), (1300, 600))
 satan2.set_colorkey((0, 0, 0))
+death_animation_done = False
 
 coeursfx = sfx.coeursfx
 mortsfx = sfx.mortsfx
@@ -377,7 +378,7 @@ active_message  = 0
 message         = messages[active_message]
 done            = False
 # "active_message2" est l'index du message courant dans "message_v".
-message_v       = ["Salut Galileo !", "Fais attention car les plateformes deviennentchautes !","Prends ces bottes pour sauter deux fois."]
+message_v       = ["Salut Galileo !", "Fais attention car les plateformes deviennent\nchaudes !","Prends ces bottes pour sauter deux fois."]
 active_message2 = 0
 message2        = message_v[active_message2]
 
@@ -698,6 +699,19 @@ def reset():
 
 synchroniser_bottes_double_saut()
 
+# Menu de fin
+police_grande = pygame.font.SysFont(None, 80)
+police_petite = pygame.font.Font("asset/polices/Coolvetica Rg.otf", 36)
+
+bouton_rejouer= pygame.Rect(490, 350, 300, 50)
+bouton_menu = pygame.Rect(490, 420, 300, 50)
+bouton_quitter = pygame.Rect(490, 490, 300, 50)
+
+background_game_over = pygame.image.load("images/Fonds/image3.jpg").convert() 
+background_game_over = pygame.transform.scale(background_game_over, (1280, 720))
+
+clic = sfxboutton
+clic.set_volume(0.5)
 # -------------------------------------------------------------------------------------------------#
 # Boucle principale
 # -------------------------------------------------------------------------------------------------#
@@ -993,6 +1007,48 @@ while running:
                     pause_hover_index = i
 
         if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+            screen.blit(curseur_img, pos)
+            if etat == "game_over" and death_animation_done:
+                screen.blit(background_game_over, (0, 0))
+                mouse_pos = pygame.mouse.get_pos()
+                if bouton_menu.collidepoint(event.pos):
+                    clic.play()
+                    time.sleep(0.3)
+                    pygame.quit()
+                    subprocess.run([sys.executable, "main.py"])  
+                    running = False
+                elif bouton_quitter.collidepoint(event.pos):
+                    clic.play()
+                    time.sleep(0.3)
+                    running = False
+                elif bouton_rejouer.collidepoint(event.pos):
+                    clic.play()
+                    time.sleep(0.3)
+                    pygame.quit()
+                    subprocess.run([sys.executable, "general.py"])  
+                    running = False
+                texte = police_grande.render("GAME OVER", True, (255, 0, 0))
+                screen.blit(texte, (640 - texte.get_width() // 2, 250))
+
+                color_menu = (0,255,0) if bouton_menu.collidepoint(mouse_pos) else (0,200,0)
+                color_quitter = (255,0,0) if bouton_quitter.collidepoint(mouse_pos) else (200,0,0)
+                color_rejouer = (0,255,0) if bouton_rejouer.collidepoint(mouse_pos) else (0,200,0)
+
+                pygame.draw.rect(screen, color_menu, bouton_menu)
+                pygame.draw.rect(screen, color_quitter, bouton_quitter)
+                pygame.draw.rect(screen, color_rejouer, bouton_rejouer)
+
+                texte_menu = police_petite.render("Menu Début", True, (255, 255, 255))
+                texte_quitter = police_petite.render("Quitter ", True, (255, 255, 255))
+                texte_rejouer = police_petite.render("Rejouer", True, (255, 255, 255))
+
+                screen.blit(texte_menu, (bouton_menu.x + (bouton_menu.width - texte_menu.get_width()) // 2,
+                                                bouton_menu.y + (bouton_menu.height - texte_menu.get_height()) // 2))
+                screen.blit(texte_quitter, (bouton_quitter.x + (bouton_quitter.width - texte_quitter.get_width()) // 2,
+                                                bouton_quitter.y + (bouton_quitter.height - texte_quitter.get_height()) // 2))
+                screen.blit(texte_rejouer, (bouton_rejouer.x + (bouton_rejouer.width - texte_rejouer.get_width()) // 2,
+                                                bouton_rejouer.y + (bouton_rejouer.height - texte_rejouer.get_height()) // 2))
             if afficher_parametres_pause:
                 if fermer_pause_rect.collidepoint(event.pos):
                     afficher_parametres_pause = False
@@ -1004,6 +1060,7 @@ while running:
                             appliquer_parametre_jeu(parametre["name"], parametre["enabled"])
                             pause_button_sfx.play()
                             break
+            
             elif en_pause:
                 mx, my = event.pos
                 for i, bouton in enumerate(boutons_pause):
@@ -1037,7 +1094,7 @@ while running:
                     for index, item in enumerate(inventaire):
                         slot_rect = get_slot_inventaire_rect(index)
                         if slot_rect.collidepoint(event.pos):
-                            sfx.select.play()
+                            sfx.selectsfx.play()
                             inventaire_index_selectionne = index
                             tooltip_inventaire_visible = ITEMS_INVENTAIRE[item["id"]]["utilisable"]
                             break
@@ -1046,7 +1103,7 @@ while running:
                         slot_rect = get_slot_inventaire_rect(inventaire_index_selectionne)
                         tooltip_equiper_rect = pygame.Rect(slot_rect.right + 10, slot_rect.y, 130, 40)
                         if tooltip_equiper_rect.collidepoint(event.pos):
-                            sfx.select.play()
+                            sfx.selectsfx.play()
                             item_id = inventaire[inventaire_index_selectionne]["id"]
                             if item_id == "bottes":
                                 if bottes_equipees:
@@ -1164,15 +1221,10 @@ while running:
             speedrun_finished = True
             speedrun_final_time = speedrun_elapsed
 
-    if etat == "mort" and death_animation_start is not None:
+    if etat == "mort" and death_animation_start is not None and not death_animation_done:
         if current_time - death_animation_start >= DEATH_GAME_OVER_DELAY_MS:
             etat = "game_over"
-
-    if etat == "game_over":
-        pygame.quit()
-        subprocess.run(['python', 'menu_de_fin.py'])
-        running = False
-        break
+            death_animation_done = True
 
     # ---- Caméra ----
     camera_x = joueur.rect.centerx - screen_width // 2
@@ -1677,8 +1729,7 @@ while running:
             fondu.set_alpha(alpha)
             screen.blit(fondu, (0, 0))
 
-    pos = pygame.mouse.get_pos()
-    screen.blit(curseur_img, pos)
+
     pygame.display.flip()
 
 pygame.quit()
