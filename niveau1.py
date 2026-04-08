@@ -115,4 +115,7 @@ def plateforme_2():
         pygame.Rect(2750, 6180, 110,40),
         pygame.Rect(3100, 5497, 400,160),
         pygame.Rect(2800, 5850, 110,40),
+        pygame.Rect(2540, 5250, 110,40),
+        pygame.Rect(2740, 5050, 110,40),
+        pygame.Rect(2840, 4050, 110,40),
     ]
