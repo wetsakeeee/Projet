@@ -1007,8 +1007,6 @@ while running:
                     pause_hover_index = i
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            pos = pygame.mouse.get_pos()
-            screen.blit(curseur_img, pos)
             if etat == "game_over" and death_animation_done:
                 screen.blit(background_game_over, (0, 0))
                 mouse_pos = pygame.mouse.get_pos()
@@ -1729,7 +1727,8 @@ while running:
             fondu.set_alpha(alpha)
             screen.blit(fondu, (0, 0))
 
-
+    pos = pygame.mouse.get_pos()
+    screen.blit(curseur_img, pos)
     pygame.display.flip()
 
 pygame.quit()
