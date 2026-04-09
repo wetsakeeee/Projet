@@ -1,5 +1,6 @@
-import pygame
-import math
+import pygame, math
+
+
 def get_plateformes():
     '''Retourne une liste de rectangles représentant les
     plateformes du niveau : (x, y, largeur, hauteur)'''
@@ -72,7 +73,7 @@ def plateforme_pic2():
             pygame.Rect(600,  5660, 150, 80),
             pygame.Rect(650,  5000, 150, 95),
             pygame.Rect(1700, 2380, 150,80),
-            pygame.Rect(3100, 5920,150,80),
+            pygame.Rect(3100,5920,150,80)
 
 
 
@@ -111,17 +112,20 @@ def plateforme_2():
         pygame.Rect(3100, 6000, 400,160),
         pygame.Rect(2750, 6180, 110,40),
         pygame.Rect(3100, 5497, 400,160),
-        pygame.Rect(2800, 5750, 110,40),
+        pygame.Rect(2800, 5850, 110,40),
         pygame.Rect(2540, 5250, 110,40),
         pygame.Rect(2740, 5050, 110,40),
-        
-
+        pygame.Rect(2840, 4050, 110,40),
     ]
-def bateau():
-    return [pygame.Rect(40,367,300,130),]
+def get_bateau():
+    return [
+        pygame.Rect(50,750,300,130),
+        # limite du bateau
+        pygame.Rect(30,520,50,300),
+        pygame.Rect(330,520,50,300),
+        pygame.Rect(50,320,300,130),
 
-
-
+        ]
 class MovingPlatform:
     def __init__(self, x, y, width, height, dy_amplitude=0, dx_amplitude=0, y_min=None, y_max=None, x_min=None, x_max=None, speed=0.02, phase=0):
         self.rect = pygame.Rect(x, y, width, height)
