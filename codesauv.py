@@ -11,10 +11,11 @@ pygame.display.set_caption("Cheat Code")
 #-----------ecriture----------------
 police = pygame.font.SysFont(None, 36)
 sequence_cible = ['[0]', '[8]', '[1]', '[2]']
+sequence_cible2 = ['[2]', '[1]', '[0]', '[1]']
 sequence_actuelle = []
 
 #-----------Background----------------
-BG = pygame.image.load("images/hacker.png").convert_alpha()
+BG = pygame.image.load("images/Fonds/hacker.png").convert_alpha()
 BG = pygame.transform.scale(BG, (700, 720))
 
 running = True
@@ -41,7 +42,6 @@ while running:
 
             if sequence_actuelle == sequence_cible:
                 print("Code activé ! Lancement de general.py...")
-                # On met l'affichage avant le sleep
                 screen.blit(BG, (0, 0))
                 texte = police.render("Entrez le code : " + ''.join(sequence_actuelle), True, (139, 0, 0))
                 screen.blit(texte, (20, 300))
@@ -50,7 +50,16 @@ while running:
                 pygame.quit()
                 subprocess.run(['python', 'general.py'])
                 sys.exit()
-
+            if sequence_actuelle == sequence_cible2:
+                print("Code activé ! Lancement de general.py...")
+                screen.blit(BG, (0, 0))
+                texte = police.render("Entrez le code : " + ''.join(sequence_actuelle), True, (139, 0, 0))
+                screen.blit(texte, (20, 300))
+                pygame.display.flip()
+                time.sleep(0.4)
+                pygame.quit()
+                subprocess.run(['python', 'general.py', '2700', '6350'])
+                sys.exit()
     # Affichage
     screen.blit(BG, (0, 0))
     texte = police.render("Entrez le code : " + ''.join(sequence_actuelle), True, (139, 0, 0))
