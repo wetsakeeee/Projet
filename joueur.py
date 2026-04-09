@@ -20,7 +20,7 @@ class Joueur(pygame.sprite.Sprite):
         self.idle_image = pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur000.png").convert_alpha(), (30,30))
         self.image = self.idle_image
         self.rect = pygame.Rect(0, 0, 50, 100)
-        self.rect.center = (100, 6299)
+        self.rect.center = (x,y)
         self.draw_offset_x = 8
         self.draw_offset_x_left = -8
         self.draw_offset_y = 15
@@ -30,8 +30,8 @@ class Joueur(pygame.sprite.Sprite):
         #self.rect = pygame.Rect(700,4090, 50 ,100)
         #vvv Enlever le commentaire pour le mettre à côté de la porte enfer
         #self.rect = pygame.Rect(285, 840, 50, 100)
-        #vvv Enlever le commentaire pour le mettre à côté de la porte enfer
-        #self.rect = pygame.Rect(2200, 6400, 50, 100)
+        #vvv Enlever le commentaire pour le mettre à côté de Caronte
+        #self.rect = pygame.Rect(3850, 5380, 50, 100)
 
         # Frame joueur normal
         self.sprites_normal = []
