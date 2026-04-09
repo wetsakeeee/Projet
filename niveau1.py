@@ -41,10 +41,6 @@ def get_plateformes():
         pygame.Rect(1910,980,100,40),
         pygame.Rect(-5, 1300, 500,40),
 
-
-
-
-        
         #------------Bordure-----------
         pygame.Rect(-260, 200, 255, 10000),
         pygame.Rect(-250, 4875, 500, 40),
@@ -119,3 +115,5 @@ def plateforme_2():
         pygame.Rect(2740, 5050, 110,40),
         pygame.Rect(2840, 4050, 110,40),
     ]
+def bateau():
+    return [pygame.Rect(40,367,300,130),]
