@@ -2,7 +2,7 @@ import pygame, sys, subprocess, time
 import math
 from joueur import Joueur
 from monstre import Monstre
-from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2, mur2, plateforme_2
+from niveau1 import get_plateforme_prison, get_plateformes, plateforme_pic, plateforme_pic2, get_sol, get_plateformeshaute, get_sol2, mur2, plateforme_2, get_bateau, get_plateformes_mobiles
 import sfx
 from sfx import sauter, sfxmarche1, sfxmarche2, sfxmarche3, tombersfx, musiquefond, sfxboutton
 import settings
@@ -19,6 +19,7 @@ pygame.display.set_icon(icon)
 pygame.display.set_caption("Galileo Galilei : Across the afterife")
 clock = pygame.time.Clock()
 etat = "jeu"
+niveau_actuel = 1 # 2 si niveau avec caronte, 3 si boss
 
 debug_hitboxes = False
 
@@ -193,11 +194,14 @@ liresfx.set_volume(0.5)
 
 # Toute interaction active
 # 1 pour Giordano, 2 pour Virgilio, 3 pour Condamné, 4 pour Caronte, porte pour la porte
-active = False
-active2 = False
-active3 = False
-active4 = False
-active_porte = False
+if niveau_actuel == 1:
+    active = False
+    active2 = False
+    active3 = False
+    active4 = False
+    active_porte = False
+else:
+    active = active2 = active3 = active4 = active_porte = False
 
 # --- INVENTAIRE ---
 frame_inventaire           = pygame.transform.scale(pygame.image.load("images/GUI/Inventaire/frame_inventaire.png").convert_alpha(), (80, 80))
@@ -454,12 +458,13 @@ plateformes2 = plateforme_2()
 sol                = get_sol()
 niveau_largeur     = 5000
 sol2 = get_sol2()
+plateformes_mobiles = get_plateformes_mobiles()
 
 # Permet d'attribuer au plateformes une image correspondante
 # Le except sert à ce que le jeu ne crash pas si l'image est introuvable
 try:
     platform_image_orig  = pygame.image.load("images/Plateformes/Niveau1/plateforme_moyenne.png").convert_alpha()
-    platform_petite_orig = pygame.image.load("images/Plateformes/Niveau1/plateforme_petite.png").convert_alpha()
+    plateforme_petite_orig = pygame.image.load("images/Plateformes/Niveau1/plateforme_petite.png").convert_alpha()
     plateforme2_img = pygame.image.load("images/Plateformes/Niveau2/plateforme2.png").convert_alpha()
     mur_prison_orig   = pygame.image.load("images/Plateformes/Niveau1/murprison.png").convert_alpha()
     sol_image_orig = pygame.image.load("images/Plateformes/Niveau1/sol.png").convert_alpha()
@@ -470,7 +475,7 @@ try:
     mur2_2_image_orig = pygame.image.load("images/Plateformes/Niveau2/mur2_niveau2.png").convert_alpha()
 except:
     platform_image_orig  = None
-    platform_petite_orig = None
+    plateforme_petite_orig = None
     plateforme2_img = None
     mur_prison_orig = None
     sol_image_orig = None
@@ -488,7 +493,7 @@ except:
 platform_images = []
 for plateforme in plateformes:
     if plateforme.width == 100 and plateforme.height == 40:
-        orig = platform_petite_orig
+        orig = plateforme_petite_orig
     else:
         orig = platform_image_orig
     if orig:
@@ -541,6 +546,7 @@ plateforme2_images = []
 for plat in plateformes2:
     img = pygame.transform.scale(plateforme2_img,(plat.width,plat.height))
     plateforme2_images.append(img)
+
 
 
 # Background
@@ -674,7 +680,6 @@ def reset():
     tooltip_inventaire_visible = False
     inventaire_affiche = False
     lire_pancarte = False
-    pancarte_active = False
     panneau_button_hidden = False
 
     titre_index = 0
@@ -713,6 +718,19 @@ background_game_over = pygame.transform.scale(background_game_over, (1280, 720))
 clic = sfxboutton
 clic.set_volume(0.5)
 # -------------------------------------------------------------------------------------------------#
+# Niveau 2
+# -------------------------------------------------------------------------------------------------#
+fond_caronte = pygame.transform.scale(pygame.image.load("images/Fonds/fond_caronte.png").convert_alpha(), (screen_width * 2,screen_height * 2))
+
+bateau_plat = get_bateau()
+bateau_img = pygame.image.load("images/Divers/bateau.png").convert_alpha()
+
+bateau_image = []
+for bat in bateau_plat:
+    img = pygame.transform.scale(bateau_img,(bat.width,bat.height))
+    bateau_image.append(img)
+
+# -------------------------------------------------------------------------------------------------#
 # Boucle principale
 # -------------------------------------------------------------------------------------------------#
 running = True
@@ -723,12 +741,16 @@ while running:
     current_time  = pygame.time.get_ticks()
     synchroniser_bottes_double_saut()
     button_offset = int(math.sin(current_time * 0.01) * 3)
-    active_porte = joueur.rect.colliderect(porte_rect)
-    active = joueur.rect.colliderect(giordano_rect)
-    active2 = joueur.rect.colliderect(virgilio_rect)
-    active3 = joueur.rect.colliderect(condamne1_rect)
-    active4 = joueur.rect.colliderect(caronte_rect)
-    pancarte_active = joueur.rect.colliderect(panneau_rect) and not panneau_button_hidden
+    if niveau_actuel == 1:
+        active_porte = joueur.rect.colliderect(porte_rect)
+        active = joueur.rect.colliderect(giordano_rect)
+        active2 = joueur.rect.colliderect(virgilio_rect)
+        active3 = joueur.rect.colliderect(condamne1_rect)
+        active4 = joueur.rect.colliderect(caronte_rect)
+        pancarte_active = joueur.rect.colliderect(panneau_rect) and not panneau_button_hidden
+    else:
+        active = active2 = active3 = active4 = active_porte = False
+        pancarte_active = False
 
     # Animation de Giordano
     if not giordano_pause:
@@ -852,148 +874,152 @@ while running:
         if event.type == pygame.KEYDOWN and inventaire_affiche and event.key != pygame.K_f:
             continue
         if event.type == pygame.KEYDOWN:
-            #---Giordano
-            if event.key == pygame.K_e and dialogue_g:
-                if not done:
-                    counter = speed * len(message)
-                    npcsfx.stop()
-                else:
-                    if active_message < len(messages) - 1:
-                        active_message += 1
-                        message = messages[active_message]
-                        counter = 0
-                        done = False
+            if niveau_actuel == 1:
+                #---Giordano
+                if event.key == pygame.K_e and dialogue_g:
+                    if not done:
+                        counter = speed * len(message)
+                        npcsfx.stop()
                     else:
-                        dialogue_g = False
-                        done = False
+                        if active_message < len(messages) - 1:
+                            active_message += 1
+                            message = messages[active_message]
+                            counter = 0
+                            done = False
+                        else:
+                            dialogue_g = False
+                            done = False
+                            active_message = 0
+                            counter = 0
+                            joueur.peut_bouger = True
+                            giordano_dialogue_cooldown = current_time
+                            if current_time - giordano_cooldown > duree_cooldown:
+                                giordano_cooldown = current_time
+                                ajouter_vie()
+                elif event.key == pygame.K_e and active and not dialogue_g:
+                    if current_time - giordano_dialogue_cooldown > duree_dialogue_cooldown:
+                        dialogue_g = True
+                        joueur.peut_bouger = False
+                        counter = 0
                         active_message = 0
-                        counter = 0
-                        joueur.peut_bouger = True
-                        giordano_dialogue_cooldown = current_time
-                        if current_time - giordano_cooldown > duree_cooldown:
-                            giordano_cooldown = current_time
-                            ajouter_vie()
-            elif event.key == pygame.K_e and active and not dialogue_g:
-                if current_time - giordano_dialogue_cooldown > duree_dialogue_cooldown:
-                    dialogue_g = True
-                    joueur.peut_bouger = False
-                    counter = 0
-                    active_message = 0
-                    message = messages[0]
-            #---Virgilio
-            elif event.key == pygame.K_e and dialogue_v:
-                if not done:
-                    counter = speed * len(message2)
-                    npcsfx.stop()
-                else:
-                    if active_message2 < len(message_v) - 1:
-                        active_message2 += 1
-                        message2 = message_v[active_message2]
-                        counter = 0
-                        done = False
+                        message = messages[0]
+                #---Virgilio
+                elif event.key == pygame.K_e and dialogue_v:
+                    if not done:
+                        counter = speed * len(message2)
+                        npcsfx.stop()
                     else:
-                        dialogue_v = False
-                        done = False
+                        if active_message2 < len(message_v) - 1:
+                            active_message2 += 1
+                            message2 = message_v[active_message2]
+                            counter = 0
+                            done = False
+                        else:
+                            dialogue_v = False
+                            done = False
+                            active_message2 = 0
+                            counter = 0
+                            joueur.peut_bouger = True
+                            virgilio_dialogue_cooldown = current_time
+                            if ajouter_objet_inventaire("bottes"):
+                                sfx.objetsfx.play()
+                            if current_time - virgilio_cooldown > duree_cooldown and vies < 3:
+                                virgilio_cooldown = current_time
+                                ajouter_vie()
+                            
+                elif event.key == pygame.K_e and active2 and not dialogue_v:
+                    if current_time - virgilio_dialogue_cooldown > duree_dialogue_cooldown:
+                        dialogue_v = True
+                        joueur.peut_bouger = False
+                        counter = 0
                         active_message2 = 0
-                        counter = 0
-                        joueur.peut_bouger = True
-                        virgilio_dialogue_cooldown = current_time
-                        if ajouter_objet_inventaire("bottes"):
-                            sfx.objetsfx.play()
-                        if current_time - virgilio_cooldown > duree_cooldown and vies < 3:
-                            virgilio_cooldown = current_time
-                            ajouter_vie()
-                        
-            elif event.key == pygame.K_e and active2 and not dialogue_v:
-                if current_time - virgilio_dialogue_cooldown > duree_dialogue_cooldown:
-                    dialogue_v = True
-                    joueur.peut_bouger = False
-                    counter = 0
-                    active_message2 = 0
-                    message2 = message_v[0]
-            #---Condamné 1
-            elif event.key == pygame.K_e and dialogue_c1:
-                if not done:
-                    counter = speed * len(message3)
-                    condamnesfx.stop()
-                else:
-                    if active_message_c1 < len(message_c1) - 1:
-                        active_message_c1 += 1
-                        message3 = message_c1[active_message_c1]
-                        counter = 0
-                        done = False
+                        message2 = message_v[0]
+                #---Condamné 1
+                elif event.key == pygame.K_e and dialogue_c1:
+                    if not done:
+                        counter = speed * len(message3)
+                        condamnesfx.stop()
                     else:
-                        dialogue_c1 = False
-                        done = False
+                        if active_message_c1 < len(message_c1) - 1:
+                            active_message_c1 += 1
+                            message3 = message_c1[active_message_c1]
+                            counter = 0
+                            done = False
+                        else:
+                            dialogue_c1 = False
+                            done = False
+                            active_message_c1 = 0
+                            counter = 0
+                            joueur.peut_bouger = True
+                            if ajouter_objet_inventaire("epee"):
+                                sfx.objetsfx.play()
+                            condamne1_dialogue_cooldown = current_time
+                elif event.key == pygame.K_e and active3 and not dialogue_c1:
+                    if current_time - condamne1_dialogue_cooldown > duree_dialogue_cooldown:
+                        dialogue_c1 = True
+                        joueur.peut_bouger = False
+                        counter = 0
                         active_message_c1 = 0
-                        counter = 0
-                        joueur.peut_bouger = True
-                        if ajouter_objet_inventaire("epee"):
-                            sfx.objetsfx.play()
-                        condamne1_dialogue_cooldown = current_time
-            elif event.key == pygame.K_e and active3 and not dialogue_c1:
-                if current_time - condamne1_dialogue_cooldown > duree_dialogue_cooldown:
-                    dialogue_c1 = True
-                    joueur.peut_bouger = False
-                    counter = 0
-                    active_message_c1 = 0
-                    message3 = message_c1[0]
-            #---Caronte
-            elif event.key == pygame.K_e and dialogue_caronte:
-                if not done:
-                    counter = speed * len(message4)
-                    carontesfx.stop()
-                else:
-                    if active_message_caronte < len(message_caronte) - 1:
-                        active_message_caronte += 1
-                        message4 = message_caronte[active_message_caronte]
-                        counter = 0
-                        done = False
+                        message3 = message_c1[0]
+                #---Caronte
+                elif event.key == pygame.K_e and dialogue_caronte:
+                    if not done:
+                        counter = speed * len(message4)
+                        carontesfx.stop()
                     else:
-                        dialogue_caronte = False
-                        done = False
-                        active_message_caronte = 0
+                        if active_message_caronte < len(message_caronte) - 1:
+                            active_message_caronte += 1
+                            message4 = message_caronte[active_message_caronte]
+                            counter = 0
+                            done = False
+                        else: # Le dialogue se finit
+                            dialogue_caronte = False
+                            done = False
+                            active_message_caronte = 0
+                            counter = 0
+                            joueur.peut_bouger = True
+                            caronte_dialogue_cooldown = current_time
+                            niveau_actuel = 2
+                            joueur.rect.topleft = (200,750)
+                            joueur.vel_y = 0
+                elif event.key == pygame.K_e and active4 and not dialogue_caronte:
+                    if current_time - caronte_dialogue_cooldown > duree_dialogue_cooldown:
+                        dialogue_caronte = True
+                        joueur.peut_bouger = False
                         counter = 0
-                        joueur.peut_bouger = True
-                        caronte_dialogue_cooldown = current_time
-            elif event.key == pygame.K_e and active4 and not dialogue_caronte:
-                if current_time - caronte_dialogue_cooldown > duree_dialogue_cooldown:
-                    dialogue_caronte = True
+                        active_message_caronte = 0
+                        message4 = message_caronte[0]
+                        done = False
+                elif event.key == pygame.K_e and pancarte_active and not lire_pancarte:
+                    lire_pancarte = True
                     joueur.peut_bouger = False
-                    counter = 0
-                    active_message_caronte = 0
-                    message4 = message_caronte[0]
-                    done = False
-            elif event.key == pygame.K_e and pancarte_active and not lire_pancarte:
-                lire_pancarte = True
-                joueur.peut_bouger = False
-                pancarte_timer = current_time
-                if titre_index >= speed * len(titre) and titre_fin == 0:
-                    titre_fin = current_time
-                liresfx.play()
-            elif event.key == pygame.K_e and show_button_e_pancarte:
-                lire_pancarte = False
-                show_button_e_pancarte = False
-                joueur.peut_bouger = True
-                panneau_button_hidden = True
-                panneau_button_timer = current_time
-                stoplire.play()
-            elif event.key == pygame.K_e and active_porte:
-                transition_porte_enfer_start = current_time
-                joueur.peut_bouger = False
-            elif event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1 and not dialogue_caronte:
-                sfx.ouvrir_inv.play()
-                inventaire_affiche = True
-                joueur.peut_bouger = False
-                inventaire_timer = current_time
-                show_button_f_inventaire = False
-            elif event.key == pygame.K_f and inventaire_affiche:
-                sfx.fermer_inv.play()
-                inventaire_affiche = False
-                show_button_f_inventaire = False
-                tooltip_inventaire_visible = False
-                inventaire_index_selectionne = None
-                joueur.peut_bouger = True
+                    pancarte_timer = current_time
+                    if titre_index >= speed * len(titre) and titre_fin == 0:
+                        titre_fin = current_time
+                    liresfx.play()
+                elif event.key == pygame.K_e and show_button_e_pancarte:
+                    lire_pancarte = False
+                    show_button_e_pancarte = False
+                    joueur.peut_bouger = True
+                    panneau_button_hidden = True
+                    panneau_button_timer = current_time
+                    stoplire.play()
+                elif event.key == pygame.K_e and active_porte:
+                    transition_porte_enfer_start = current_time
+                    joueur.peut_bouger = False
+                elif event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1 and not dialogue_caronte:
+                    sfx.ouvrir_inv.play()
+                    inventaire_affiche = True
+                    joueur.peut_bouger = False
+                    inventaire_timer = current_time
+                    show_button_f_inventaire = False
+                elif event.key == pygame.K_f and inventaire_affiche:
+                    sfx.fermer_inv.play()
+                    inventaire_affiche = False
+                    show_button_f_inventaire = False
+                    tooltip_inventaire_visible = False
+                    inventaire_index_selectionne = None
+                    joueur.peut_bouger = True
         if event.type == pygame.MOUSEMOTION and en_pause and not afficher_parametres_pause:
             mx, my = event.pos
             for i, bouton in enumerate(boutons_pause):
@@ -1160,10 +1186,30 @@ while running:
         panneau_button_hidden = False
 
     # ---- Physique ----
+    for plat in plateformes_mobiles:
+        old_x, old_y = plat.rect.x,plat.rect.y
+        plat.update()
+    # Transporte le joueur si il est dessus
+        dx_plat = plat.rect.x - old_x
+        dy_plat = plat.rect.y - old_y
+        joueur_sur_plat = (
+            joueur.rect.bottom >= plat.rect.top and
+            joueur.rect.bottom <= plat.rect.top + 15 and
+            joueur.rect.right > plat.rect.left and
+            joueur.rect.left < plat.rect.right
+        )
+        if joueur_sur_plat:
+            joueur.rect.x += dx_plat
+            joueur.rect.y += dy_plat
     # Permet d'ajouter la collisions avec les plateformes
     if not en_pause and not transition_recommencer and not transition_porte_enfer_start and etat != "mort":
-        joueur.deplacement(plateformes + plateformes_prison + sol + sol2 + mur2 + plateformes2)
-        joueur.appliquer_gravite(plateformes + plateformes_prison + sol + sol2 + mur2 + plateformes2, murs=plateformes_haute)
+        if niveau_actuel == 1:
+            rects_mobiles = [p.rect for p in plateformes_mobiles]
+            joueur.deplacement(plateformes + plateformes_prison + sol + sol2 + mur2 + plateformes2 + rects_mobiles)
+            joueur.appliquer_gravite(plateformes + plateformes_prison + sol + sol2 + mur2 + plateformes2 + rects_mobiles, murs=plateformes_haute)
+        elif niveau_actuel == 2:
+            joueur.deplacement(bateau_plat)
+            joueur.appliquer_gravite(bateau_plat)
         joueur.update_double_jump_effects()
 
         if not invincible:
@@ -1225,19 +1271,34 @@ while running:
             death_animation_done = True
 
     # ---- Caméra ----
-    camera_x = joueur.rect.centerx - screen_width // 2
-    if joueur.rect.centerx < 2000:
-        camera_x = max(0, min(camera_x, 2000 - screen_width))
-    else:
-        camera_x = max(2000, min(camera_x, 4100 - screen_width))
-    camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
-    camera_y = max(0, camera_y)
+    if niveau_actuel == 1:
+        camera_x = joueur.rect.centerx - screen_width // 2
+        if joueur.rect.centerx < 2000:
+            camera_x = max(0, camera_x)  # ← bloque la caméra à x=0 minimum
+        else:
+            camera_x = max(2000, min(camera_x, 4100 - screen_width))
+        camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
+        camera_y = max(0, camera_y)
+    elif niveau_actuel == 2:
+        camera_x = joueur.rect.centerx - screen_width // 2
+        camera_x = max(0, camera_x)
+        camera_y = 250
+        
+    if niveau_actuel == 1:
+        if joueur.rect.centerx >= 2000:
+            bg_x = -(camera_x - 2000) * parallax_factor + bg_offset_x - bg_width // 2
+        else:
+            bg_x = -camera_x * parallax_factor + bg_offset_x
+        bg_y = -camera_y * parallax_factor + bg_offset_y
 
-    if joueur.rect.centerx >= 2000:
-        bg_x = -(camera_x - 2000) * parallax_factor + bg_offset_x - bg_width // 2
-    else:
-        bg_x = -camera_x * parallax_factor + bg_offset_x
-    bg_y = -camera_y * parallax_factor + bg_offset_y
+        if joueur.rect.centerx >= 2000:
+            bg_x = -(camera_x - 2000) * parallax_factor + bg_offset_x - bg_width // 2
+        else:
+            bg_x = -camera_x * parallax_factor + bg_offset_x
+        bg_y = -camera_y * parallax_factor + bg_offset_y
+    elif niveau_actuel == 2:
+        bg_x = (-camera_x * parallax_factor + bg_offset_x + (current_time * -0.02)) % fond_caronte.get_width()
+        bg_y = -camera_y * parallax_factor + bg_offset_y
 
     if etat == "mort":
         death_elapsed = current_time - death_animation_start
@@ -1339,15 +1400,18 @@ while running:
     # ========================
     # RENDU
     # ========================
-    screen.blit(background, (bg_x, bg_y + 100))
-    screen.blit(porte, (porte_rect.x - camera_x, porte_rect.y - camera_y))
-    screen.blit(panneau, (panneau_rect.x - camera_x, panneau_rect.y - camera_y))
-    screen.blit(giordano_images[current_giordano], (giordano_rect.x - camera_x, giordano_rect.y - camera_y))
-    screen.blit(virgilio, (virgilio_rect.x - camera_x, virgilio_rect.y - camera_y))
-    screen.blit(condamne1, (condamne1_rect.x - camera_x, condamne1_rect.y - camera_y))
-    screen.blit(caronte, (caronte_rect.x - camera_x, caronte_rect.y - camera_y))
-    screen.blit(bateau,(bateau_rect.x - camera_x,bateau_rect.y - camera_y))
-
+    if niveau_actuel == 1:
+        screen.blit(background, (bg_x, bg_y + 100))
+        screen.blit(porte, (porte_rect.x - camera_x, porte_rect.y - camera_y))
+        screen.blit(panneau, (panneau_rect.x - camera_x, panneau_rect.y - camera_y))
+        screen.blit(giordano_images[current_giordano], (giordano_rect.x - camera_x, giordano_rect.y - camera_y))
+        screen.blit(virgilio, (virgilio_rect.x - camera_x, virgilio_rect.y - camera_y))
+        screen.blit(condamne1, (condamne1_rect.x - camera_x, condamne1_rect.y - camera_y))
+        screen.blit(caronte, (caronte_rect.x - camera_x, caronte_rect.y - camera_y))
+        screen.blit(bateau,(bateau_rect.x - camera_x,bateau_rect.y - camera_y))
+    elif niveau_actuel == 2:
+        screen.blit(fond_caronte, (bg_x - fond_caronte.get_width(), bg_y + 100))
+        screen.blit(fond_caronte, (bg_x, bg_y + 100))
     # Monstre
     monstre.draw(screen, camera_x, camera_y)
 
@@ -1367,81 +1431,90 @@ while running:
 #-----------------------------------------------
 
 # Parcours deux listes avec zip, celles des plateformes et des images correspondantes, pour afficher chaque plateforme à sa position avec la bonne image.
+    if niveau_actuel == 1:
+        # Murs prison
+        for mur, img in zip(plateformes_prison, mur_prison_images):
+            screen.blit(img, (mur.x - camera_x, mur.y - camera_y))
+        if debug_hitboxes:
+            for mur in plateformes_prison:
+                debug_surface = pygame.Surface((mur.width, mur.height), pygame.SRCALPHA)
+                debug_surface.fill((0, 0, 255, 100))
+                screen.blit(debug_surface, (mur.x - camera_x, mur.y - camera_y))
 
-    # Murs prison
-    for mur, img in zip(plateformes_prison, mur_prison_images):
-        screen.blit(img, (mur.x - camera_x, mur.y - camera_y))
-    if debug_hitboxes:
-        for mur in plateformes_prison:
-            debug_surface = pygame.Surface((mur.width, mur.height), pygame.SRCALPHA)
-            debug_surface.fill((0, 0, 255, 100))
-            screen.blit(debug_surface, (mur.x - camera_x, mur.y - camera_y))
+        # Plateformes normales
+        for plat, img in zip(plateformes, platform_images):
+            if img:
+                screen.blit(img, (plat.x - camera_x, plat.y - camera_y))
+        if debug_hitboxes:
+            for plat in plateformes:
+                debug_surface = pygame.Surface((plat.width, plat.height), pygame.SRCALPHA)
+                debug_surface.fill((255, 0, 0, 100))
+                screen.blit(debug_surface, (plat.x - camera_x, plat.y - camera_y))
+        # Plateformes mobiles
+        for plat in plateformes_mobiles:
+            if plateforme_petite_orig:
+                img = pygame.transform.scale(plateforme2_img, (plat.rect.width, plat.rect.height))
+                screen.blit(img,(plat.rect.x - camera_x, plat.rect.y - camera_y))
+        # Sol2
+        for s, img in zip(sol2, sol2_images):
+            screen.blit(img, (s.x - camera_x, s.y - camera_y))
+        # Plateforme2
+        for s, img in zip(plateformes2, plateforme2_images):
+            if img:
+                screen.blit(img, (s.x - camera_x, s.y - camera_y))
+        # Sol
+        for s, img in zip(sol, sol_images):
+            screen.blit(img, (s.x - camera_x, s.y - camera_y - 15))
+        if debug_hitboxes:
+            for s in sol:
+                debug_surface = pygame.Surface((s.width, s.height), pygame.SRCALPHA)
+                debug_surface.fill((255, 128, 0, 100))
+                screen.blit(debug_surface, (s.x - camera_x, s.y - camera_y))
+        # Mur2
+        for s, img in zip(mur2, mur2_images):
+            if img:
+                screen.blit(img, (s.x - camera_x, s.y - camera_y))
 
-    # Plateformes normales
-    for plat, img in zip(plateformes, platform_images):
-        if img:
+        # Pics sol
+        for plat, img in zip(plateformes_danger, pic_sol_images):
             screen.blit(img, (plat.x - camera_x, plat.y - camera_y))
-    if debug_hitboxes:
-        for plat in plateformes:
-            debug_surface = pygame.Surface((plat.width, plat.height), pygame.SRCALPHA)
-            debug_surface.fill((255, 0, 0, 100))
-            screen.blit(debug_surface, (plat.x - camera_x, plat.y - camera_y))
 
-    # Sol2
-    for s, img in zip(sol2, sol2_images):
-        screen.blit(img, (s.x - camera_x, s.y - camera_y))
-    # Plateforme2
-    for s, img in zip(plateformes2, plateforme2_images):
-        if img:
-            screen.blit(img, (s.x - camera_x, s.y - camera_y))
-    # Sol
-    for s, img in zip(sol, sol_images):
-        screen.blit(img, (s.x - camera_x, s.y - camera_y - 15))
-    if debug_hitboxes:
-        for s in sol:
-            debug_surface = pygame.Surface((s.width, s.height), pygame.SRCALPHA)
-            debug_surface.fill((255, 128, 0, 100))
-            screen.blit(debug_surface, (s.x - camera_x, s.y - camera_y))
-    # Mur2
-    for s, img in zip(mur2, mur2_images):
-        if img:
-            screen.blit(img, (s.x - camera_x, s.y - camera_y))
+        # Pics plafond
+        for plat, img in zip(plateformes_danger2, pic_plafond_images):
+            screen.blit(img, (plat.x - camera_x, plat.y - camera_y))
 
-    # Pics sol
-    for plat, img in zip(plateformes_danger, pic_sol_images):
-        screen.blit(img, (plat.x - camera_x, plat.y - camera_y))
+        if debug_hitboxes:
+            for plat in plateformes_danger + plateformes_danger2:
+                debug_surface = pygame.Surface((plat.width, plat.height), pygame.SRCALPHA)
+                debug_surface.fill((0, 255, 0, 100))
+                screen.blit(debug_surface, (plat.x - camera_x, plat.y - camera_y))
 
-    # Pics plafond
-    for plat, img in zip(plateformes_danger2, pic_plafond_images):
-        screen.blit(img, (plat.x - camera_x, plat.y - camera_y))
+        # Plateformes hautes (murs invisibles)
+        for plat_haute in plateformes_haute:
+            pygame.draw.rect(screen, (0, 0, 0),
+                            (plat_haute.x - camera_x, plat_haute.y - camera_y,
+                            plat_haute.width, plat_haute.height))
+        # Panneau
+        if pancarte_active:
+            screen.blit(bouton_e, (bouton_e_rect.x - camera_x - 700, bouton_e_rect.y - camera_y + button_offset))
 
-    if debug_hitboxes:
-        for plat in plateformes_danger + plateformes_danger2:
-            debug_surface = pygame.Surface((plat.width, plat.height), pygame.SRCALPHA)
+        if debug_hitboxes:
+            debug_surface = pygame.Surface((joueur.rect.width, joueur.rect.height), pygame.SRCALPHA)
             debug_surface.fill((0, 255, 0, 100))
-            screen.blit(debug_surface, (plat.x - camera_x, plat.y - camera_y))
+            screen.blit(debug_surface, (joueur.rect.x - camera_x, joueur.rect.y - camera_y))
 
-    # Plateformes hautes (murs invisibles)
-    for plat_haute in plateformes_haute:
-        pygame.draw.rect(screen, (0, 0, 0),
-                         (plat_haute.x - camera_x, plat_haute.y - camera_y,
-                          plat_haute.width, plat_haute.height))
+        # Effets double saut
+        for effect in joueur.double_jump_effects:
+            effect_surface = pygame.Surface((effect['width'], effect['height']), pygame.SRCALPHA)
+            effect_surface.fill((255, 255, 255, effect['alpha']))
+            screen.blit(effect_surface, (effect['x'] - camera_x - effect['width'] // 2, effect['y'] - camera_y))
 
-    # Panneau
-    if pancarte_active:
-        screen.blit(bouton_e, (bouton_e_rect.x - camera_x - 700, bouton_e_rect.y - camera_y + button_offset))
-
-    if debug_hitboxes:
-        debug_surface = pygame.Surface((joueur.rect.width, joueur.rect.height), pygame.SRCALPHA)
-        debug_surface.fill((0, 255, 0, 100))
-        screen.blit(debug_surface, (joueur.rect.x - camera_x, joueur.rect.y - camera_y))
-
-    # Effets double saut
-    for effect in joueur.double_jump_effects:
-        effect_surface = pygame.Surface((effect['width'], effect['height']), pygame.SRCALPHA)
-        effect_surface.fill((255, 255, 255, effect['alpha']))
-        screen.blit(effect_surface, (effect['x'] - camera_x - effect['width'] // 2, effect['y'] - camera_y))
-
+    # NIVEAU 2
+    # Bateau du niveau avec Caronte
+    if niveau_actuel == 2:
+        for i, (plat, img) in enumerate(zip(bateau_plat, bateau_image)):
+            if i == 0:
+                screen.blit(bateau, (plat.x - camera_x, plat.y - camera_y - 80))
 
     # HUD  Vies
     if not lire_pancarte:
