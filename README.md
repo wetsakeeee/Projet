@@ -23,33 +23,29 @@ On utilisera la bibliothèque pygame.
 Ca sera un jeu solo et en 2d.  
 Pour ce qui concerne les graphismes, ça sera des graphismes simples et pixelisés, et pour cela on va utiliser Pygame.  
 Le jeu contiendra des dialogues avec des NPC, qui nous servira à obtenir des vies, à comprendre l'histoire et à avancer dans les niveaux. 
-Il y aura une musique de fond dans l'écran du menu qui durera moins d'une minute et sera joué en boucle, jusqu'à que le joueur appui sur le bouton Jouer. Dans les niveaux, il y aura avec des musiques de fond, qui aura un lien avec la dimension où le joueur se trouve et des SFX en fonction des actions du personnages : un son différent selon le matériaux où le personnage se trouve, quand on appui sur un bouton du menu, quand un NPC parle.  
+Il y aura une musique de fond dans l'écran du menu qui durera moins d'une minute et sera joué en boucle, jusqu'à que le joueur appui sur le bouton Jouer. Dans les niveaux, il y aura une musique de fond, qui aura un lien avec la dimension où le joueur se trouve et des SFX en fonction des actions du personnages : un son différent selon le matériaux où le personnage se trouve, quand on appui sur un bouton du menu, quand un NPC parle.  
 
 ## ENNEMIS :
 
-Pendant les niveaux, il y aura peu d'ennemis pour faciliter la jouabilité du joueur. Ces ennemis seront mobile, allant de droite à gauche aléatoirement, et dès que le joueur et l'ennemi ont une distance de environ 3 blocs, l'ennemi va courser le joueur pour lui faire des dégats. A la fin de chaque dimension, il y aura principalement des boss, qui seront immobiles et présent en arrière plan, et qui nous lancera des projectiles. Il ne faudra pas le tuer, mais s'échapper de la dimension en atteignant une porte, qui nous menera vers la prochaine dimension. Pour esquiver ses projectiles, on pourra se cacher en dessous de plateformes par exemple, autrement on se déplace.
+Pendant les niveaux, il y aura peu d'ennemis pour faciliter la jouabilité du joueur. Ces ennemis seront mobiles, allant de droite à gauche aléatoirement, et dès que le joueur et l'ennemi ont une distance de environ quelques pixels, l'ennemi va courser le joueur pour lui faire des dégats. A la fin de chaque dimension, il y aura principalement des boss, qui seront immobiles et présent en arrière plan, et qui nous lancera des projectiles. Il ne faudra pas le tuer, mais s'échapper de la dimension en atteignant une porte, qui nous menera vers la prochaine dimension. Pour esquiver ses projectiles, on pourra se cacher en dessous de plateformes par exemple, autrement on se déplace.
 
 ## COMMANDES :  
   
 Navigation menu :
-Flèches et entrer pour séléctionner.   
+Flèches et entrer pour naviguer et séléctionner.   
 Saut = Espace   
-Aller à droite = d  
-Aller à gauche = q  
-S'accrocher à des liannes/tyroliennes, lire des panneaux = e
-Se Baisser = Majuscule  
+Aller à droite = D ou flèche droite   
+Aller à gauche = Q ou flèche gauche     
 Pause = Echap   
-se déplacer vers le haut (liannes, echelles) = z 
-se deplacer vers le bas (liannes, echelles) = s  
+Intéragir = E   
+Ouvrir l'inventaire = F   
+
   
 Système de score : Temps par niveaux et temps total
 Il aura 3 vies, où il recommencera jusqu'au dernier checkpoint si il les perds. Chaque vie se perd :  
 - Dès qu'il touche des obstacles (feu, lave, piques..)
-- Dès qu'il tombe dans du vide
-- Dès que sa barre de vie descend à 0, initialement à 100  
-Les checkpoints seront fréquents. 
-
-
+- Dès qu'il perd ses vies jusqu'à arriver à 0
+Les checkpoints seront fréquents et seront utilisés grâce à un code qui devra être entré sur l'écran de menu
 ## LIENS
 SFX et Musiques de fond : https://www.youtube.com/watch?v=pcdB2s2y4Qc  
 Menu gui : https://www.youtube.com/watch?v=GMBqjxcKogA  
