@@ -16,7 +16,7 @@ screen_width, screen_height = 1280, 720
 screen = pygame.display.set_mode((screen_width, screen_height))
 icon = pygame.image.load("images/logo.png").convert_alpha()
 pygame.display.set_icon(icon)
-pygame.display.set_caption("Galileo Galilei : Across the afterife")
+pygame.display.set_caption("Galileo Galilei : Across the afterlife")
 clock = pygame.time.Clock()
 etat = "jeu"
 niveau_actuel = 1 # 2 si niveau avec caronte, 3 si boss
@@ -25,7 +25,9 @@ if len(sys.argv) == 3:
     joueur = Joueur(int(sys.argv[1]), int(sys.argv[2]))
 else:
     joueur = Joueur()
-    
+# Monstre
+monstre = Monstre()
+
 debug_hitboxes = False
 
 death_animation_start = None
@@ -738,13 +740,18 @@ clic.set_volume(0.5)
 fond_caronte = pygame.transform.scale(pygame.image.load("images/Fonds/fond_caronte.png").convert_alpha(), (screen_width * 2,screen_height * 2))
 
 bateau_plat = get_bateau()
-bateau_img = pygame.image.load("images/Divers/bateau.png").convert_alpha()
+bateau_img1 = pygame.image.load("images/Divers/bateau_1.png").convert_alpha()
+bateau_img2 = pygame.image.load("images/Divers/bateau_2.png").convert_alpha()
 
 bateau_image = []
+bateau_image2 = []
 for bat in bateau_plat:
-    img = pygame.transform.scale(bateau_img,(bat.width,bat.height))
+    img = pygame.transform.scale(bateau_img1,(bat.width,bat.height))
     bateau_image.append(img)
-
+for bat in bateau_plat:
+    img2 = pygame.transform.scale(bateau_img2,(bat.width,bat.height))
+    bateau_image2.append(img2)
+monstre_alternance = 0
 # -------------------------------------------------------------------------------------------------#
 # Boucle principale
 # -------------------------------------------------------------------------------------------------#
@@ -1049,48 +1056,48 @@ while running:
                         pause_button_sfx.play()
                     pause_selected = i
                     pause_hover_index = i
+        if etat == "game_over":
+            screen.blit(background_game_over, (0, 0))
+            mouse_pos = pygame.mouse.get_pos()
+            if bouton_menu.collidepoint(event.pos):
+                clic.play()
+                time.sleep(0.3)
+                pygame.quit()
+                subprocess.run([sys.executable, "main.py"])  
+                running = False
+            elif bouton_quitter.collidepoint(event.pos):
+                clic.play()
+                time.sleep(0.3)
+                running = False
+            elif bouton_rejouer.collidepoint(event.pos):
+                clic.play()
+                time.sleep(0.3)
+                pygame.quit()
+                subprocess.run([sys.executable, "general.py"])  
+                running = False
+            texte = police_grande.render("GAME OVER", True, (255, 0, 0))
+            screen.blit(texte, (640 - texte.get_width() // 2, 250))
+
+            color_menu = (0,255,0) if bouton_menu.collidepoint(mouse_pos) else (0,200,0)
+            color_quitter = (255,0,0) if bouton_quitter.collidepoint(mouse_pos) else (200,0,0)
+            color_rejouer = (0,255,0) if bouton_rejouer.collidepoint(mouse_pos) else (0,200,0)
+
+            pygame.draw.rect(screen, color_menu, bouton_menu)
+            pygame.draw.rect(screen, color_quitter, bouton_quitter)
+            pygame.draw.rect(screen, color_rejouer, bouton_rejouer)
+
+            texte_menu = police_petite.render("Menu Début", True, (255, 255, 255))
+            texte_quitter = police_petite.render("Quitter ", True, (255, 255, 255))
+            texte_rejouer = police_petite.render("Rejouer", True, (255, 255, 255))
+
+            screen.blit(texte_menu, (bouton_menu.x + (bouton_menu.width - texte_menu.get_width()) // 2,
+                                            bouton_menu.y + (bouton_menu.height - texte_menu.get_height()) // 2))
+            screen.blit(texte_quitter, (bouton_quitter.x + (bouton_quitter.width - texte_quitter.get_width()) // 2,
+                                            bouton_quitter.y + (bouton_quitter.height - texte_quitter.get_height()) // 2))
+            screen.blit(texte_rejouer, (bouton_rejouer.x + (bouton_rejouer.width - texte_rejouer.get_width()) // 2,
+                                            bouton_rejouer.y + (bouton_rejouer.height - texte_rejouer.get_height()) // 2))
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if etat == "game_over" and death_animation_done:
-                screen.blit(background_game_over, (0, 0))
-                mouse_pos = pygame.mouse.get_pos()
-                if bouton_menu.collidepoint(event.pos):
-                    clic.play()
-                    time.sleep(0.3)
-                    pygame.quit()
-                    subprocess.run([sys.executable, "main.py"])  
-                    running = False
-                elif bouton_quitter.collidepoint(event.pos):
-                    clic.play()
-                    time.sleep(0.3)
-                    running = False
-                elif bouton_rejouer.collidepoint(event.pos):
-                    clic.play()
-                    time.sleep(0.3)
-                    pygame.quit()
-                    subprocess.run([sys.executable, "general.py"])  
-                    running = False
-                texte = police_grande.render("GAME OVER", True, (255, 0, 0))
-                screen.blit(texte, (640 - texte.get_width() // 2, 250))
-
-                color_menu = (0,255,0) if bouton_menu.collidepoint(mouse_pos) else (0,200,0)
-                color_quitter = (255,0,0) if bouton_quitter.collidepoint(mouse_pos) else (200,0,0)
-                color_rejouer = (0,255,0) if bouton_rejouer.collidepoint(mouse_pos) else (0,200,0)
-
-                pygame.draw.rect(screen, color_menu, bouton_menu)
-                pygame.draw.rect(screen, color_quitter, bouton_quitter)
-                pygame.draw.rect(screen, color_rejouer, bouton_rejouer)
-
-                texte_menu = police_petite.render("Menu Début", True, (255, 255, 255))
-                texte_quitter = police_petite.render("Quitter ", True, (255, 255, 255))
-                texte_rejouer = police_petite.render("Rejouer", True, (255, 255, 255))
-
-                screen.blit(texte_menu, (bouton_menu.x + (bouton_menu.width - texte_menu.get_width()) // 2,
-                                                bouton_menu.y + (bouton_menu.height - texte_menu.get_height()) // 2))
-                screen.blit(texte_quitter, (bouton_quitter.x + (bouton_quitter.width - texte_quitter.get_width()) // 2,
-                                                bouton_quitter.y + (bouton_quitter.height - texte_quitter.get_height()) // 2))
-                screen.blit(texte_rejouer, (bouton_rejouer.x + (bouton_rejouer.width - texte_rejouer.get_width()) // 2,
-                                                bouton_rejouer.y + (bouton_rejouer.height - texte_rejouer.get_height()) // 2))
             if afficher_parametres_pause:
                 if fermer_pause_rect.collidepoint(event.pos):
                     afficher_parametres_pause = False
@@ -1284,10 +1291,8 @@ while running:
             speedrun_finished = True
             speedrun_final_time = speedrun_elapsed
 
-    if etat == "mort" and death_animation_start is not None and not death_animation_done:
-        if current_time - death_animation_start >= DEATH_GAME_OVER_DELAY_MS:
-            etat = "game_over"
-            death_animation_done = True
+    if etat == "mort" and death_animation_done:
+        etat = "game_over"
 
     # ---- Caméra ----
 
@@ -1534,9 +1539,16 @@ while running:
     # NIVEAU 2
     # Bateau du niveau avec Caronte
     if niveau_actuel == 2:
+        monstre_alternance = pygame.time.get_ticks()
         for i, (plat, img) in enumerate(zip(bateau_plat, bateau_image)):
             if i == 0:
                 screen.blit(bateau, (plat.x - camera_x, plat.y - camera_y - 80))
+        # A corriger
+        if current_time - monstre_alternance > 500:
+            monstre.en_vie = True
+            Monstre(330,880)
+            monstre_alternance = current_time
+
 
     # HUD  Vies
     if not lire_pancarte:
