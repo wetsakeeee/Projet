@@ -102,8 +102,6 @@ class Monstre(pygame.sprite.Sprite):
 
         if not self.vivant:
             return vies, invincible, invincibilite_temps, False
-
-        # Tuer avec le couteau même si pas "actif"
         if is_attacking and hitbox_couteau and hitbox_couteau.colliderect(self.rect):
             self.vivant = False
             return vies, invincible, invincibilite_temps, True
