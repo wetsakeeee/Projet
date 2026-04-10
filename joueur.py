@@ -44,9 +44,12 @@ class Joueur(pygame.sprite.Sprite):
         self.sprites_normal.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur006.png").convert_alpha(),(150,150)))
         self.sprites_normal.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur007.png").convert_alpha(),(150,150)))
         self.sprites_normal.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur008.png").convert_alpha(),(150,150)))
+        self.sprites_normal.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur009.png").convert_alpha(),(150,150)))
+        self.sprites_normal.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur010.png").convert_alpha(),(150,150)))
+        self.sprites_normal.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur011.png").convert_alpha(),(150,150)))
         self.sprites_normal.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/joueur012.png").convert_alpha(),(150,150)))
 
-        # Frame joueur botte
+        # Frame joueur bottes
         self.sprites_botte = []
         self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur000botte.png").convert_alpha(),(150,150)))
         self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur001botte.png").convert_alpha(),(150,150)))
@@ -57,10 +60,55 @@ class Joueur(pygame.sprite.Sprite):
         self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur006botte.png").convert_alpha(),(150,150)))
         self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur007botte.png").convert_alpha(),(150,150)))
         self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur008botte.png").convert_alpha(),(150,150)))
+        self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur009botte.png").convert_alpha(),(150,150)))
+        self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur010botte.png").convert_alpha(),(150,150)))
+        self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur011botte.png").convert_alpha(),(150,150)))
         self.sprites_botte.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte/joueur012botte.png").convert_alpha(),(150,150)))
 
+
+        # Frame joueur couteau
+        self.sprites_couteau = []
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau0.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau1.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau2.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau3.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau4.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau5.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau6.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau7.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau8.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau9.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau10.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau11.png").convert_alpha(),(150,150)))
+        self.sprites_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_couteau/joueur_couteau12.png").convert_alpha(),(150,150)))
+
+        # Frame joueur couteau et bottes
+        self.sprites_botte_couteau = []
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau0.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau1.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau2.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau3.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau4.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau5.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau6.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau7.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau8.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau9.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau10.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau11.png").convert_alpha(),(150,150)))
+        self.sprites_botte_couteau.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/frame_botte_couteau/botte_couteau12.png").convert_alpha(),(150,150)))
+        
+        # Frame d'attaque du joueur
+        self.attaque = []
+        self.attaque.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/Attack/attaque_couteau.png").convert_alpha(),(150,150)))
+        self.attaque.append(pygame.transform.scale(pygame.image.load("images/frame_joueur/Attack/attaque_couteau_botte.png").convert_alpha(),(150,150)))
         self.current_sprite = 0
+
+
         self.is_animating = False
+        self.jump_sprite = 9
+        self.jump_animating = False
+        self.jump_animation_speed = 0.3
 
         # Mouvement
         self.vx = 0
@@ -73,8 +121,11 @@ class Joueur(pygame.sprite.Sprite):
         self.peut_bouger = True
         self.au_sol = False
 
+        # Inventaire
+        self.double_saut =  False
+        self.epee_equipee = False
+
         # Double saut
-        self.double_saut =  True
         self.nb_sauts = 0
         self.dernier_saut = 0
         self.double_jump_effects = []
@@ -89,15 +140,37 @@ class Joueur(pygame.sprite.Sprite):
         self.en_chute       = False
         self.chute_fadeout  = False
 
+        # Attaque
+        self.is_attacking = False
+        self.hitbox_couteau = pygame.Rect(0, 0, 50, 20)
+        self.attack_duration = 500  # 0.5 seconde en ms
+
     # ------------------------------------------------------------------
     def get_sprites(self):
-        return self.sprites_botte if self.double_saut else self.sprites_normal
+        if self.double_saut and self.epee_equipee:
+            return self.sprites_botte_couteau
+        if self.epee_equipee:
+            return self.sprites_couteau
+        if self.double_saut:
+            return self.sprites_botte
+        return self.sprites_normal
 
     # ------------------------------------------------------------------
     def update(self):
         sprites = self.get_sprites()
 
-        if self.vel_y != 0:
+        if not self.au_sol:
+            if self.jump_animating:
+                self.jump_sprite += self.jump_animation_speed
+                if self.jump_sprite >= 12:
+                    self.jump_sprite = 12
+                    self.jump_animating = False
+
+            img = sprites[int(self.jump_sprite)]
+            if self.facing_left and self.peut_bouger:
+                self.image = pygame.transform.flip(img, True, False)
+            else:
+                self.image = img
             return
 
         if self.is_animating and self.peut_bouger:
@@ -112,6 +185,13 @@ class Joueur(pygame.sprite.Sprite):
             self.image = pygame.transform.flip(img, True, False)
         else:
             self.image = img
+
+        if self.is_attacking:
+            attack_img = self.attaque[0 if not self.double_saut else 1]
+            if self.facing_left:
+                self.image = pygame.transform.flip(attack_img, True, False)
+            else:
+                self.image = attack_img
 
     # ------------------------------------------------------------------
     def deplacement(self, plateformes):
@@ -132,8 +212,18 @@ class Joueur(pygame.sprite.Sprite):
             self.is_animating = False
             self.current_sprite = 1
             self.vx *= self.friction
-            if abs(self.vx) < 0.1:
-                self.vx = 0
+
+        temps_actuel = pygame.time.get_ticks()
+
+        if touches[pygame.K_a]:
+            self.is_attacking = True
+            # Mettre à jour la hitbox ici, pas dans update()
+            if self.facing_left:
+                self.hitbox_couteau.center = (self.rect.centerx - 65, self.rect.centery)
+            else:
+                self.hitbox_couteau.center = (self.rect.centerx + 65, self.rect.centery)
+        else:
+            self.is_attacking = False
 
         # Déplacement horizontal
         self.rect.x += self.vx
@@ -164,8 +254,13 @@ class Joueur(pygame.sprite.Sprite):
         return self.au_sol
 
     # ------------------------------------------------------------------
+    def demarrer_animation_saut(self):
+        self.jump_sprite = 9
+        self.jump_animating = True
+
+    # ------------------------------------------------------------------
     def appliquer_gravite(self, plateformes, murs=None):
-        sprites = self.get_sprites()
+        etait_au_sol = self.au_sol
         self.au_sol = False
 
         self.vel_y += self.gravity
@@ -179,6 +274,8 @@ class Joueur(pygame.sprite.Sprite):
                     self.vel_y = 0
                     self.nb_sauts = 0
                     self.au_sol = True
+                    self.jump_sprite = 9
+                    self.jump_animating = False
                 elif self.vel_y < 0:
                     self.rect.top = plat.bottom
                     self.vel_y = 0
@@ -218,6 +315,10 @@ class Joueur(pygame.sprite.Sprite):
                 tombersfx.set_volume(0)
             self.en_chute = False
             self.chute_son_joue = False
+
+        if etait_au_sol and not self.au_sol and self.vel_y > 0:
+            self.jump_sprite = 12
+            self.jump_animating = False
         # Fadeout progressif au sol
         if self.chute_fadeout:
             vol_actuel = tombersfx.get_volume()
@@ -227,13 +328,6 @@ class Joueur(pygame.sprite.Sprite):
                 tombersfx.stop()
                 tombersfx.set_volume(0)
                 self.chute_fadeout = False
-
-        # Image de saut si en l'air
-        if not self.est_au_sol(plateformes):
-            if self.facing_left:
-                self.image = pygame.transform.flip(sprites[9], True, False)
-            else:
-                self.image = sprites[9]
 
     # ------------------------------------------------------------------
     def update_double_jump_effects(self):
