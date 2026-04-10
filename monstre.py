@@ -39,9 +39,8 @@ class Monstre(pygame.sprite.Sprite):
 
         self.image = self.frames[0]
         self.rect = pygame.Rect(x, y, 100, 250)
-        self.vitesse = 4
-        self.distance_activation = 800
-
+        self.vitesse = 3
+        self.distance_activation = 300
         self.actif = False
         self.vivant = True
         self.current_frame = 0
@@ -57,11 +56,14 @@ class Monstre(pygame.sprite.Sprite):
             if distance < self.distance_activation:
                 self.actif = True
 
+
         deplacement_x = 0
         if self.actif:
             if joueur_rect.centerx < self.rect.centerx:
                 deplacement_x = -self.vitesse
                 self.facing_left = True
+                if distance > self.distance_activation:
+                    self.actif = False
             else:
                 deplacement_x = self.vitesse
                 self.facing_left = False
@@ -74,8 +76,11 @@ class Monstre(pygame.sprite.Sprite):
         
         now = pygame.time.get_ticks()
         if now - self.anim_timer > 150:
-            self.anim_timer = now
-            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            if self.actif:
+                self.anim_timer = now
+                self.current_frame = (self.current_frame + 1) % len(self.frames)
+            else:
+                self.current_frame = 0
 
         img = self.frames[self.current_frame]
         if self.facing_left:
@@ -91,16 +96,22 @@ class Monstre(pygame.sprite.Sprite):
         current_time,
         invincibilite_temps,
         duree_invincibilite,
+        hitbox_couteau=None,
+        is_attacking=False,
     ):
-        """Vérifie la collision avec le joueur qui perd une vie si pas invincible et peux tuer le monstre en lui sautant par dessus """
-        if not self.vivant or not self.actif:
+
+        if not self.vivant:
+            return vies, invincible, invincibilite_temps, False
+
+        # Tuer avec le couteau même si pas "actif"
+        if is_attacking and hitbox_couteau and hitbox_couteau.colliderect(self.rect):
+            self.vivant = False
+            return vies, invincible, invincibilite_temps, True
+
+        if not self.actif:
             return vies, invincible, invincibilite_temps, False
 
         if self.rect.colliderect(joueur_rect):
-            if joueur_rect.bottom <= self.rect.centery and joueur_rect.bottom >= self.rect.top - 15:
-                self.vivant = False
-                return vies, invincible, invincibilite_temps, True
-
             if not invincible:
                 vies -= 1
                 invincible = True
@@ -126,6 +137,8 @@ class Monstre(pygame.sprite.Sprite):
             current_time,
             invincibilite_temps,
             duree_invincibilite,
+            hitbox_couteau=joueur.hitbox_couteau,
+            is_attacking=joueur.is_attacking
         )
 
     def draw(self, screen, camera_x, camera_y):
