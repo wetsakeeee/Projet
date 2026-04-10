@@ -20,7 +20,12 @@ pygame.display.set_caption("Galileo Galilei : Across the afterife")
 clock = pygame.time.Clock()
 etat = "jeu"
 niveau_actuel = 1 # 2 si niveau avec caronte, 3 si boss
-
+# Joueur
+if len(sys.argv) == 3:
+    joueur = Joueur(int(sys.argv[1]), int(sys.argv[2]))
+else:
+    joueur = Joueur()
+    
 debug_hitboxes = False
 
 death_animation_start = None
@@ -146,18 +151,15 @@ chute_y = 7000
 zoom_factor = 3
 camera_y_offset = -100
 
+camera_x = joueur.rect.centerx - screen_width // 2
+camera_y = joueur.rect.centery - screen_height // 2
+
 coeur       = pygame.transform.scale(pygame.image.load("images/GUI/coeur.png").convert_alpha(), (100, 100))
 vie_text    = pygame.transform.scale(pygame.image.load("images/GUI/vie.png").convert_alpha(), (186, 72))
 double_jump = pygame.transform.scale(pygame.image.load("images/GUI/icone_double_jump.png").convert_alpha(), (100, 100))
 
 police       = pygame.font.Font("asset/polices/ari-w9500-bold.ttf", 24)
 police_titre = pygame.font.Font("asset/polices/Dungeon Depths.otf", 50)
-
-# Joueur
-if len(sys.argv) == 3:
-    joueur = Joueur(int(sys.argv[1]), int(sys.argv[2]))
-else:
-    joueur = Joueur()
 
 # Système d'invincibilité
 invincible          = False
@@ -296,6 +298,13 @@ def synchroniser_bottes_double_saut():
     elif bottes_equipees:
         bottes_equipees = False
 
+def synchroniser_epee():
+    global epee_equipee
+    if joueur.epee_equipee:
+        ajouter_objet_inventaire("epee")
+        epee_equipee = True
+    else:
+        epee_equipee = False
 
 # ----------------------------
 # NPC
@@ -397,7 +406,7 @@ cadre_c1 = pygame.image.load("images/Npc/Dialogues/cadre_dialogue_condamne.png")
 cadre_c1_rect  = cadre_c1.get_rect(center=(640, 550))
 
 # "active_message_c1" est l'index du message courant dans "message_c1".
-message_c1 = ["...", "...", "Aide mo-", "...", "*ne bouge plus*"]
+message_c1 = ["...", "...", "Aide m-", "...", "Prends ce couteau, t'en aura besoin...","C'est trop dangereux ici...", "J'suis pas capable de survivre..."]
 active_message_c1 = 0
 message3 = message_c1[active_message_c1]
 
@@ -412,6 +421,9 @@ cadre_caronte_rect  = cadre_caronte.get_rect(center=(640, 550))
 message_caronte = ["Je suis Caronte, le passeur des Enfers.", "Si tu veux sortir d'ici, tu devras m'aider à passer\nsur le fleuve.","Des codamnés y abritent et tentent de nous faire\ncouler moi et mon bateau. ", "Aide moi à passer et je te donnerai un cadeau\nen échange."]
 active_message_caronte = 0
 message4 = message_caronte[active_message_caronte]
+
+transition_caronte_start = 0 # Aller au niveau 2
+transition_caronte_teleporte = False
 
 bateau = pygame.transform.scale(pygame.image.load("images/Divers/bateau.png").convert_alpha(), (300,130))
 bateau_rect = bateau.get_rect()
@@ -635,6 +647,10 @@ def reset():
     joueur.en_chute = False
     joueur.chute_son_joue = False
     joueur.chute_fadeout = False
+    joueur.double_saut = False   # pas de bottes au départ
+    joueur.epee_equipee = False  # pas d'épée au départ 
+    transition_caronte_start = 0
+    transition_caronte_teleporte = False
 
     vies = 3
     etat = "jeu"
@@ -693,6 +709,7 @@ def reset():
     joueur.vx = 0
     joueur.nb_sauts = 0
     joueur.double_saut = False
+    joueur.epee_equipee = False
     joueur.au_sol = False
     joueur.double_jump_effects = []
     joueur.peut_bouger = True
@@ -701,8 +718,6 @@ def reset():
     joueur.facing_left = False
 
     pygame.mixer.unpause()
-
-synchroniser_bottes_double_saut()
 
 # Menu de fin
 police_grande = pygame.font.SysFont(None, 80)
@@ -740,6 +755,7 @@ while running:
     clock.tick(60)
     current_time  = pygame.time.get_ticks()
     synchroniser_bottes_double_saut()
+    synchroniser_epee()
     button_offset = int(math.sin(current_time * 0.01) * 3)
     if niveau_actuel == 1:
         active_porte = joueur.rect.colliderect(porte_rect)
@@ -797,6 +813,7 @@ while running:
                     jump_key_held = True
                     joueur.vel_y = joueur.jump_force
                     joueur.nb_sauts = 2
+                    joueur.demarrer_animation_saut()
                     sauter.play()
                     joueur.timer_chute = pygame.time.get_ticks()
                     joueur.chute_son_joue = False
@@ -921,7 +938,8 @@ while running:
                             counter = 0
                             joueur.peut_bouger = True
                             virgilio_dialogue_cooldown = current_time
-                            if ajouter_objet_inventaire("bottes"):
+                            if not inventaire_contient("bottes"):
+                                ajouter_objet_inventaire("bottes")
                                 sfx.objetsfx.play()
                             if current_time - virgilio_cooldown > duree_cooldown and vies < 3:
                                 virgilio_cooldown = current_time
@@ -951,9 +969,10 @@ while running:
                             active_message_c1 = 0
                             counter = 0
                             joueur.peut_bouger = True
-                            if ajouter_objet_inventaire("epee"):
+                            if not inventaire_contient("epee"):
+                                ajouter_objet_inventaire("epee")
                                 sfx.objetsfx.play()
-                            condamne1_dialogue_cooldown = current_time
+                                condamne1_dialogue_cooldown = current_time
                 elif event.key == pygame.K_e and active3 and not dialogue_c1:
                     if current_time - condamne1_dialogue_cooldown > duree_dialogue_cooldown:
                         dialogue_c1 = True
@@ -977,11 +996,10 @@ while running:
                             done = False
                             active_message_caronte = 0
                             counter = 0
-                            joueur.peut_bouger = True
+                            joueur.peut_bouger = False
                             caronte_dialogue_cooldown = current_time
-                            niveau_actuel = 2
-                            joueur.rect.topleft = (200,750)
-                            joueur.vel_y = 0
+                            transition_caronte_start = current_time
+                            transition_caronte_teleporte = False
                 elif event.key == pygame.K_e and active4 and not dialogue_caronte:
                     if current_time - caronte_dialogue_cooldown > duree_dialogue_cooldown:
                         dialogue_caronte = True
@@ -1007,19 +1025,19 @@ while running:
                 elif event.key == pygame.K_e and active_porte:
                     transition_porte_enfer_start = current_time
                     joueur.peut_bouger = False
-                elif event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1 and not dialogue_caronte:
-                    sfx.ouvrir_inv.play()
-                    inventaire_affiche = True
-                    joueur.peut_bouger = False
-                    inventaire_timer = current_time
-                    show_button_f_inventaire = False
-                elif event.key == pygame.K_f and inventaire_affiche:
-                    sfx.fermer_inv.play()
-                    inventaire_affiche = False
-                    show_button_f_inventaire = False
-                    tooltip_inventaire_visible = False
-                    inventaire_index_selectionne = None
-                    joueur.peut_bouger = True
+            if event.key == pygame.K_f and not inventaire_affiche and not lire_pancarte and not dialogue_g and not dialogue_v and not dialogue_c1 and not dialogue_caronte:
+                sfx.ouvrir_inv.play()
+                inventaire_affiche = True
+                joueur.peut_bouger = False
+                inventaire_timer = current_time
+                show_button_f_inventaire = False
+            elif event.key == pygame.K_f and inventaire_affiche:
+                sfx.fermer_inv.play()
+                inventaire_affiche = False
+                show_button_f_inventaire = False
+                tooltip_inventaire_visible = False
+                inventaire_index_selectionne = None
+                joueur.peut_bouger = True
         if event.type == pygame.MOUSEMOTION and en_pause and not afficher_parametres_pause:
             mx, my = event.pos
             for i, bouton in enumerate(boutons_pause):
@@ -1136,8 +1154,8 @@ while running:
                                 else:
                                     joueur.double_saut = True
                                     bottes_equipees = True
-                            elif item_id == "epee":
-                                epee_equipee = not epee_equipee
+                            if item_id == "epee":
+                                joueur.epee_equipee = not joueur.epee_equipee
                             tooltip_inventaire_visible = False
 
     keys = pygame.key.get_pressed()
@@ -1168,6 +1186,7 @@ while running:
             jump_key_held = True
             joueur.vel_y = joueur.jump_force
             joueur.nb_sauts = 1
+            joueur.demarrer_animation_saut()
             sauter.play()
         elif not keys[pygame.K_SPACE]:
             ground_jump_consumed = False
@@ -1271,18 +1290,19 @@ while running:
             death_animation_done = True
 
     # ---- Caméra ----
+
     if niveau_actuel == 1:
-        camera_x = joueur.rect.centerx - screen_width // 2
+        camera_x += (joueur.rect.centerx - screen_width // 2 - camera_x) * 0.11
         if joueur.rect.centerx < 2000:
             camera_x = max(0, camera_x)  # ← bloque la caméra à x=0 minimum
         else:
             camera_x = max(2000, min(camera_x, 4100 - screen_width))
-        camera_y = joueur.rect.centery - screen_height // 2 + camera_y_offset
+        camera_y += (joueur.rect.centery - screen_height // 2 + camera_y_offset - camera_y) * 0.11
         camera_y = max(0, camera_y)
     elif niveau_actuel == 2:
-        camera_x = joueur.rect.centerx - screen_width // 2
+        camera_x += (joueur.rect.centerx - screen_width // 2 - camera_x) * 0.11
         camera_x = max(0, camera_x)
-        camera_y = 250
+        camera_y += (250 - camera_y) * 0.11
         
     if niveau_actuel == 1:
         if joueur.rect.centerx >= 2000:
@@ -1425,7 +1445,9 @@ while running:
         sprite_x = joueur.rect.centerx - camera_x - joueur.image.get_width() // 2 + sprite_offset_x
         sprite_y = joueur.rect.bottom - camera_y - joueur.image.get_height() + joueur.draw_offset_y
         screen.blit(joueur.image, (sprite_x, sprite_y))
-
+    if joueur.is_attacking:
+        hitbox_screen_x = joueur.hitbox_couteau.x - camera_x
+        hitbox_screen_y = joueur.hitbox_couteau.y - camera_y
 #-----------------------------------------------
 # RENDU DES PLATEFORMES
 #-----------------------------------------------
@@ -1780,15 +1802,15 @@ while running:
         temps_transition_porte = current_time - transition_porte_enfer_start
         if temps_transition_porte < 500:
             alpha = int((temps_transition_porte / 500) * 255)
-        elif temps_transition_porte < 4500:
+        elif temps_transition_porte < 1500:
             alpha = 255
             if not transition_porte_teleporte:
-                joueur.rect.center = (2100,6400) # coordonnée de destination, où il se teleporte
+                joueur.rect.center = (2100,6500) # coordonnée de destination, où il se teleporte
                 joueur.vel_y = 0
                 joueur.vx = 0
             transition_porte_teleporte = True
-        elif temps_transition_porte < 5000:
-            alpha = int((1 - ((temps_transition_porte - 4500) / 500)) * 255)
+        elif temps_transition_porte < 1500:
+            alpha = int((1 - ((temps_transition_porte - 1500) / 500)) * 255)
         else:
             transition_porte_enfer_start = 0
             joueur.peut_bouger = not (en_pause or lire_pancarte or inventaire_affiche or dialogue_g or dialogue_v or dialogue_c1 or dialogue_caronte)
@@ -1799,7 +1821,31 @@ while running:
             fondu.fill((0, 0, 0))
             fondu.set_alpha(alpha)
             screen.blit(fondu, (0, 0))
+    if transition_caronte_start:
+        temps_transition_caronte = current_time - transition_caronte_start
+        if temps_transition_caronte < 500:
+            alpha = int((temps_transition_caronte / 500) * 255)
+        elif temps_transition_caronte < 1000:
+            alpha = 255
+            if not transition_caronte_teleporte:
+                niveau_actuel = 2
+                joueur.rect.topleft = (200, 750)
+                joueur.vel_y = 0
+                joueur.vx = 0
+                transition_caronte_teleporte = True
+        elif temps_transition_caronte < 1500:
+            alpha = int((1 - ((temps_transition_caronte - 1000) / 500)) * 255)
+        else:
+            transition_caronte_start = 0
+            transition_caronte_teleporte = False
+            joueur.peut_bouger = True
+            alpha = 0
 
+        if alpha > 0:
+            fondu = pygame.Surface((screen_width, screen_height))
+            fondu.fill((0, 0, 0))
+            fondu.set_alpha(alpha)
+            screen.blit(fondu, (0, 0))
     pos = pygame.mouse.get_pos()
     screen.blit(curseur_img, pos)
     pygame.display.flip()
