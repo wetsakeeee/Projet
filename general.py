@@ -32,7 +32,7 @@ if len(sys.argv) == 3:
 else:
     monstre = Monstre()
 
-debug_hitboxes = True
+debug_hitboxes = False
 
 death_animation_start = None
 death_sound_stage = 0
@@ -58,7 +58,7 @@ DEATH_GAME_OVER_DELAY_MS = (
 titre_logo = pygame.image.load("images/titre.png").convert_alpha()
 titre_rect = titre_logo.get_rect(midtop=(screen_width // 2, 100))
 
-vies = 30
+vies = 3
 
 # --- SPEEDRUN TIMER ---
 speedrun = settings.speedrun
@@ -1405,7 +1405,8 @@ while running:
             )
             if mort:
                 sfx.degat.play()
-
+            if invincible and current_time - invincibilite_temps > duree_invincibilite:
+                invincible = False
 # --------------------------------------------------
 # NIVEAU 2
 # --------------------------------------------------
@@ -1514,7 +1515,7 @@ while running:
         if niveau_actuel == 1:
             camera_x += (joueur.rect.centerx - screen_width // 2 - camera_x) * 0.11
             if joueur.rect.centerx < 2000:
-                camera_x = max(0, camera_x)
+                camera_x = max(0, min(camera_x, 2000 - screen_width))
             else:
                 camera_x = max(2000, min(camera_x, 4100 - screen_width))
             camera_y += (joueur.rect.centery - screen_height // 2 + camera_y_offset - camera_y) * 0.11
