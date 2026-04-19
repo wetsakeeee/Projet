@@ -32,7 +32,7 @@ class Joueur(pygame.sprite.Sprite):
         #self.rect = pygame.Rect(285, 840, 50, 100)
         #vvv Enlever le commentaire pour le mettre à côté de Caronte
         #self.rect = pygame.Rect(3850, 5380, 50, 100)
-        self.rect = pygame.Rect(2350, 3800, 50, 100)        
+        #self.rect = pygame.Rect(2350, 3800, 50, 100)        
 
         # Frame joueur normal
         self.sprites_normal = []
